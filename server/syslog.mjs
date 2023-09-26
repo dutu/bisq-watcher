@@ -17,7 +17,6 @@ export const levels = {
   notice: 'notice',
   info: 'info',
   debug: 'debug',
-  rapport: 'rapport',
 }
 
 /**
@@ -26,8 +25,8 @@ export const levels = {
  * @type {{warning: string, error: string, notice: string, info: string}}
  */
 export const icons = {
-  error:  '🔺 ',
-  warning: '🔸 ',
+  error:  '🔺',
+  warning: '🔸',
   notice: '🔹',
   info: '▫️'
 }

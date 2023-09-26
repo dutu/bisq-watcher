@@ -1,4 +1,28 @@
 {
-  "name": "bisq-notify",
-  "packageManager": "yarn@3.6.3"
+  "name": "bisq-watcher",
+  "version": "0.0.1",
+  "description": "bisq-watcher",
+  "main": "server/app.mjs",
+  "engines": {
+    "node": "20.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dutu/bisq-watcher"
+  },
+  "keywords": [
+    "bisq"
+  ],
+  "scripts": {
+    "start": "node --experimental-modules server/app.mjs"
+  },
+  "packageManager": "yarn@3.6.3",
+  "dependencies": {
+    "chokidar": "^3.5.3",
+    "dayjs": "^1.11.10",
+    "eventemitter3": "^5.0.1",
+    "node-telegram-bot-api": "^0.63.0",
+    "winston": "^3.10.0",
+    "winston-transport": "^4.5.0"
+  }
 }

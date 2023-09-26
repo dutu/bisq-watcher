@@ -53,10 +53,10 @@ export const config = [
     logger: [
       {
         type: 'telegram',
-        apiToken: "624126:AAEfjLOoYRQ4kvEMEQT8H6RS85zFPVY",
-        chatIds: ['1884806'],
+        apiToken: "721156:AAEfjLOoYRQ4kvEMEQT8H6RS85zFPVY",
+        chatIds: ['14944806'],
         timestamp: false,
-        enabled: true,
+        enabled: false,
       },
       {
         type: 'console',
@@ -65,9 +65,9 @@ export const config = [
       },
       {
         type: 'file',
-        filename: 'app.log',
+        filename: './logs/app.log',
         timestamp: true,
-        enabled: true,
+        enabled: false,
       },
     ]
   }

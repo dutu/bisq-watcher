@@ -19,24 +19,11 @@
  */
 export default [
   {
-    eventName: 'startingBisq',
-    pattern: 'Version: Version{VERSION={0},',
-    message: 'Starting Bisq Version {0}',
-    sendToTelegram: true
-  },
-  {
-    eventName: 'walletInitialized_p2pNetWorkReady',
-    pattern: 'walletInitialized=true, p2pNetWorkReady=true',
-    message: 'Wallet initialized, p2p network ready',
-    sendToTelegram: true
-  },
-  {
     eventName: 'myOfferTaken',
     pattern: 'MyOfferTakenEvents: We got a offer removed. id={0:uptoHyphen}, state=RESERVED',
     message: `({0}) Your offer with ID {0} was taken.`,
     sendToTelegram: true
   },
-
 
   /**
    * Step 1. Phase DEPOSIT_PAID
@@ -63,6 +50,13 @@ export default [
     enabled: true,
   },
   {
+    eventName: 'BuyerAsMakerTrade_BUYER_SAW_DEPOSIT_TX_IN_NETWORK',
+    pattern: 'Set new state at BuyerAsMakerTrade (id={0}): BUYER_SAW_DEPOSIT_TX_IN_NETWORK',
+    message: '({0}) Deposit transaction is published. Wait for blockchain confirmation!',
+    sendToTelegram: true,
+    enabled: true,
+  },
+  {
     eventName: 'BuyerAsTakerTrade_BUYER_RECEIVED_DEPOSIT_TX_PUBLISHED_MSG',
     pattern: 'Set new state at BuyerAsTakerTrade (id={0}): BUYER_RECEIVED_DEPOSIT_TX_PUBLISHED_MSG',
     message: '({0}) You got a new trade with ID {0}. Deposit transaction is published. Wait for blockchain confirmation!',
@@ -75,15 +69,15 @@ export default [
    */
   {
     eventName: 'SellerAsMakerTrade_DEPOSIT_CONFIRMED_IN_BLOCK_CHAIN',
-    pattern: `Set new state at SellerAsMakerTrade (id={0}): DEPOSIT_CONFIRMED_IN_BLOCK_CHAIN`,
-    message: 'Deposit transaction for trade with ID {0} is confirmed. Wait until payment has started!',
+    pattern: 'Set new state at SellerAsMakerTrade (id={0}): DEPOSIT_CONFIRMED_IN_BLOCK_CHAIN',
+    message: '({0}) Deposit transaction is confirmed. Wait until payment has started!',
     sendToTelegram: true,
     enabled: true,
   },
   {
     eventName: 'SellerAsTakerTrade_DEPOSIT_CONFIRMED_IN_BLOCK_CHAIN',
-    pattern: `Set new state at SellerAsTakerTrade (id={0}): DEPOSIT_CONFIRMED_IN_BLOCK_CHAIN`,
-//    message: 'Deposit transaction for trade with ID {0} is confirmed. Wait until payment has started!',
+    pattern: 'Set new state at SellerAsTakerTrade (id={0}): DEPOSIT_CONFIRMED_IN_BLOCK_CHAIN',
+    message: 'Deposit transaction for trade with ID {0} is confirmed. Wait until payment has started!',
     sendToTelegram: true,
     enabled: true,
   },
@@ -96,7 +90,7 @@ export default [
   },
   {
     eventName: 'BuyerAsTakerTrade_DEPOSIT_CONFIRMED_IN_BLOCK_CHAIN',
-    pattern: `Set new state at BuyerAsTakerTrade (id={0}): DEPOSIT_CONFIRMED_IN_BLOCK_CHAIN`,
+    pattern: 'Set new state at BuyerAsTakerTrade (id={0}): DEPOSIT_CONFIRMED_IN_BLOCK_CHAIN',
     message: '({0}) Deposit transaction is confirmed. Open your Bisq application and start the payment',
     sendToTelegram: true,
     enabled: true,
@@ -120,16 +114,16 @@ export default [
     enabled: true,
   },
   {
-    eventName: 'BuyerAsMakerTrade_BUYER_SAW_ARRIVED_FIAT_PAYMENT_INITIATED_MSG',
-    pattern: `Set new state at BuyerAsMakerTrade (id={0}): BUYER_SAW_ARRIVED_FIAT_PAYMENT_INITIATED_MSG`,
-    message: '({0}) BTC seller received fiat payment started message. Wait until payment has arrived!',
+    eventName: 'BuyerAsMakerTrade_BUYER_STORED_IN_MAILBOX_FIAT_PAYMENT_INITIATED_MSG',
+    pattern: 'Set new state at BuyerAsMakerTrade (id={0}): BUYER_STORED_IN_MAILBOX_FIAT_PAYMENT_INITIATED_MSG',
+    message: '({0}) You confirmed fiat payment has started. Wait until payment has arrived!',
     sendToTelegram: true,
     enabled: true,
   },
   {
-    eventName: 'BuyerAsTakerTrade_BUYER_SAW_ARRIVED_FIAT_PAYMENT_INITIATED_MSG',
-    pattern: `Set new state at BuyerAsTakerTrade (id={0}): BUYER_SAW_ARRIVED_FIAT_PAYMENT_INITIATED_MSG`,
-//    message: 'New trade with ID {0}, deposit transaction is paid. Wait for blockchain confirmation!',
+    eventName: 'BuyerAsTakerTrade_BUYER_STORED_IN_MAILBOX_FIAT_PAYMENT_INITIATED_MSG',
+    pattern: 'Set new state at BuyerAsTakerTrade (id={0}): BUYER_STORED_IN_MAILBOX_FIAT_PAYMENT_INITIATED_MSG',
+    message: '({0}) You confirmed fiat payment has started. Wait until payment has arrived!',
     sendToTelegram: true,
     enabled: true,
   },
@@ -145,7 +139,6 @@ export default [
     sendToTelegram: true,
     enabled: true,
   },
-
   {
     eventName: 'SellerAsTakerTrade_SELLER_CONFIRMED_IN_UI_FIAT_PAYMENT_RECEIPT',
     pattern: 'Set new state at SellerAsTakerTrade (id={0}): SELLER_CONFIRMED_IN_UI_FIAT_PAYMENT_RECEIPT',
@@ -176,19 +169,18 @@ export default [
     sendToTelegram: true,
     enabled: true,
   },
-
-  /*
-
-
-   */
-
-
-/*
   {
-    eventName: 'MobileNotificationService: Send message',
-    pattern: "MobileNotificationService: Send message: '{0}'",
-    message: '{0}',
-    sendToTelegram: true
+    eventName: 'BuyerAsMakerTrade_BUYER_SAW_PAYOUT_TX_IN_NETWORK',
+    pattern: 'Set new state at BuyerAsMakerTrade (id={0}): BUYER_SAW_PAYOUT_TX_IN_NETWORK',
+    message: '({0}) The trade is completed.',
+    sendToTelegram: true,
+    enabled: true,
   },
-*/
+  {
+    eventName: 'BuyerAsTakerTrade_BUYER_RECEIVED_PAYOUT_TX_PUBLISHED_MSG',
+    pattern: 'Set new state at BuyerAsTakerTrade (id={0}): BUYER_RECEIVED_PAYOUT_TX_PUBLISHED_MSG',
+    message: '({0}) The trade is completed.',
+    sendToTelegram: true,
+    enabled: true,
+  },
 ]
