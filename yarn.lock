@@ -288,6 +288,7 @@ __metadata:
   dependencies:
     chokidar: ^3.5.3
     dayjs: ^1.11.10
+    debug: ^4.3.4
     eventemitter3: ^5.0.1
     node-telegram-bot-api: ^0.63.0
     winston: ^3.10.0
@@ -545,7 +546,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:4, debug@npm:^4.3.3":
+"debug@npm:4, debug@npm:^4.3.3, debug@npm:^4.3.4":
   version: 4.3.4
   resolution: "debug@npm:4.3.4"
   dependencies:

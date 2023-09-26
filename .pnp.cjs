@@ -30,6 +30,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageDependencies": [\
             ["chokidar", "npm:3.5.3"],\
             ["dayjs", "npm:1.11.10"],\
+            ["debug", "virtual:428f325a939c2653ad822eb3d75efb02ac311523dd0d4f9645afc39ea00bd86eceac35a9d59c9b6977d76b670a4ef0ae057ea572338a44729aa592711a8c05a3#npm:4.3.4"],\
             ["eventemitter3", "npm:5.0.1"],\
             ["node-telegram-bot-api", "npm:0.63.0"],\
             ["winston", "npm:3.10.0"],\
@@ -376,6 +377,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["bisq-watcher", "workspace:."],\
             ["chokidar", "npm:3.5.3"],\
             ["dayjs", "npm:1.11.10"],\
+            ["debug", "virtual:428f325a939c2653ad822eb3d75efb02ac311523dd0d4f9645afc39ea00bd86eceac35a9d59c9b6977d76b670a4ef0ae057ea572338a44729aa592711a8c05a3#npm:4.3.4"],\
             ["eventemitter3", "npm:5.0.1"],\
             ["node-telegram-bot-api", "npm:0.63.0"],\
             ["winston", "npm:3.10.0"],\

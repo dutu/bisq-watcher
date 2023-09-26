@@ -1,4 +1,5 @@
 import { EventEmitter } from 'eventemitter3'
+import Debug from 'debug'
 import fs from 'fs'
 import chokidar from 'chokidar'
 import readline from 'readline'
@@ -6,6 +7,7 @@ import { resolveEnvVariablesInPath, capitalize } from './util.mjs'
 import { levels } from './syslog.mjs'
 import rules from './rules/rules.mjs'
 
+const dbg_fw = Debug('fw')
 
 /**
  * LogProcessor class for watching and processing log files.
@@ -158,6 +160,14 @@ class LogProcessor extends EventEmitter {
         start = 0
       }
 
+      if (fileSize === this.#lastLineRead) {
+        // File size has not changed, skip reading.
+        return
+      }
+
+      // Log the status before reading lines
+      dbg_fw(`Reading lines from file. start: ${start}, fileSize: ${fileSize}, lastLineRead: ${this.#lastLineRead}`)
+
       const fileStream = fs.createReadStream(this.#filePath, { start })
       const rl = readline.createInterface({ input: fileStream, terminal: false })
 
@@ -180,6 +190,7 @@ class LogProcessor extends EventEmitter {
         const [, timestamp, level] = line.match(logMetadataPattern) || []
         if (timestamp && level) {
           if (this.#buffer) {
+            dbg_fw(`Processing buffered line: ${this.#buffer}`)
             rules.forEach(rule => {
               this.#processLogEventWithRule(this.#buffer, rule, timestamp, level)
             })
@@ -191,6 +202,8 @@ class LogProcessor extends EventEmitter {
         }
       }
 
+      // Log status after reading lines
+      dbg_fw(`Done reading new lines. Updating lastLineRead to ${fileSize}`)
       this.#lastLineRead = fileSize
     } catch (error) {
       this.#emitSystemMessage({ level: levels.error, message: `File read error: ${error.message}` })
@@ -215,6 +228,7 @@ class LogProcessor extends EventEmitter {
       this.#watcher = chokidar.watch(this.#filePath)
 
       this.#watcher.on('change', () => {
+        dbg_fw('File change detected. Reading new lines...')
         this.#readNewLines()
       })
 
