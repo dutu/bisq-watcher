@@ -29,6 +29,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./",\
           "packageDependencies": [\
             ["chokidar", "npm:3.5.3"],\
+            ["crypto", "npm:1.0.1"],\
             ["dayjs", "npm:1.11.10"],\
             ["debug", "virtual:428f325a939c2653ad822eb3d75efb02ac311523dd0d4f9645afc39ea00bd86eceac35a9d59c9b6977d76b670a4ef0ae057ea572338a44729aa592711a8c05a3#npm:4.3.4"],\
             ["eventemitter3", "npm:5.0.1"],\
@@ -376,6 +377,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageDependencies": [\
             ["bisq-watcher", "workspace:."],\
             ["chokidar", "npm:3.5.3"],\
+            ["crypto", "npm:1.0.1"],\
             ["dayjs", "npm:1.11.10"],\
             ["debug", "virtual:428f325a939c2653ad822eb3d75efb02ac311523dd0d4f9645afc39ea00bd86eceac35a9d59c9b6977d76b670a4ef0ae057ea572338a44729aa592711a8c05a3#npm:4.3.4"],\
             ["eventemitter3", "npm:5.0.1"],\
@@ -639,6 +641,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["path-key", "npm:3.1.1"],\
             ["shebang-command", "npm:2.0.0"],\
             ["which", "npm:2.0.2"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["crypto", [\
+        ["npm:1.0.1", {\
+          "packageLocation": "./.yarn/cache/crypto-npm-1.0.1-7cb8e3dca6-087fe3165b.zip/node_modules/crypto/",\
+          "packageDependencies": [\
+            ["crypto", "npm:1.0.1"]\
           ],\
           "linkType": "HARD"\
         }]\

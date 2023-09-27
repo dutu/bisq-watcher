@@ -6,8 +6,17 @@ import readline from 'readline'
 import { resolveEnvVariablesInPath, capitalize } from './util.mjs'
 import { levels } from './syslog.mjs'
 import rules from './rules/rules.mjs'
+import EventCache from './eventCache.mjs'
 
 const dbg_fw = Debug('fw')
+
+const levelMap = {
+  'ALERT': 'alert',
+  'ERROR': 'error',
+  'WARN': 'warning',
+  'INFO': 'info',
+  'DEBUG': 'debug'
+}
 
 /**
  * LogProcessor class for watching and processing log files.
@@ -26,33 +35,73 @@ const dbg_fw = Debug('fw')
  */
 class LogProcessor extends EventEmitter {
   #filePath
-  #lastLineRead = 0
+  #atStartBuildEventCacheOnly
+  #lastPositionProcessed = 0
   #buffer = ''
   #watcher
+  #overlappingGoBackNPositions
+  #nextStartPosition = 0
+  #isReading = false
+  #shouldReadAgain = false
+  #eventCache = new EventCache()
 
-
-  constructor(filePath) {
+  /**
+   * Constructs a new LogProcessor object.
+   *
+   * @param {Object} config - Configuration object
+   * @param {string} config.logFile - Path to the log file to be processed
+   * @param {Object} [config.debug] - Debugging settings
+   * @param {boolean} [config.debug.atStartBuildEventCacheOnly=true] - Whether to build the event cache only at start
+   * @param {number} [config.debug.overlappingGoBackNPositions=20000] - Number of positions to go back to ensure buffer overlapping
+   */
+  constructor(config) {
     super()
-    this.#filePath = resolveEnvVariablesInPath(filePath)
+    this.#filePath = resolveEnvVariablesInPath(config.logFile)
+    this.#atStartBuildEventCacheOnly= config.debug?.atStartBuildEventCacheOnly ?? true
+    this.#overlappingGoBackNPositions = config.debug?.overlappingGoBackNPositions ?? 20000
   }
 
   /**
-   * Converts log file level to syslog level
+   * Extracts the date and level from a given log line, transforms the date into a Date object,
+   * and maps the level to a corresponding value.
    *
-   * @param {string} level - Log level from the log file.
-   * @returns {string} - Corresponding syslog level.
+   * @param {string} line - The log line to be parsed.
+   * @returns {Object} An object containing the extracted Date object and mapped level.
+   *
+   * @example
+   * const result = extractTimestampAndLevel("Sep-26 15:53:03.480 [PersistenceManager-read-MyBlindVoteList] INFO  b.c.p.PersistenceManager: Reading MyBlindVoteList completed in 12 ms")
+   * console.log(result) // { timestamp: Date object, level: 'info' }
    */
-  #convertLogLevel(level) {
-    const levelMap = {
-      'ALERT': 'alert',
-      'ERROR': 'error',
-      'WARN': 'warning',
-      'INFO': 'info',
-      'DEBUG': 'debug'
+  #extractTimestampAndLevel(line) {
+    const regex = /^(\w+-\d+ \d+:\d+:\d+\.\d+) \[.*?\] (\w+) /
+    const match = line.match(regex)
+
+    if (!match) {
+      return { timestamp: null, level: null }
     }
-    return levelMap[level.toUpperCase()] || 'unknown'
+
+    const logDateStr = match[1]
+    const currentYear = new Date().getFullYear()
+    const parsedDate = new Date(`${logDateStr} ${currentYear}`)
+
+    // Check if the parsed date is in the future.
+    if (parsedDate > new Date()) {
+      // If it's in the future, then it probably belongs to the previous year.
+      parsedDate.setFullYear(parsedDate.getFullYear() - 1)
+    }
+
+    const level = levelMap[match[2]] || 'unknown'
+
+    return { timestamp: parsedDate, level  }
   }
 
+  /**
+   * Emits a system event message.
+   *
+   * @param {Object} params - Parameters for the system message
+   * @param {string} params.level - The log level of the system message
+   * @param {string} params.message - The message to emit
+   */
   #emitSystemMessage({ level, message }) {
     this.emit('eventData', { timestamp: new Date(), eventName: `system${capitalize(level)}`, logLevel: level, data: [level, message] })
   }
@@ -136,9 +185,7 @@ class LogProcessor extends EventEmitter {
       const match = this.#matchPatternInLogEvent(rule.pattern, logEvent)
       if (match) {
         const [...data] = match
-        const timestampDate = new Date(extractedTimestamp)
-        const convertedLogLevel = this.#convertLogLevel(extractedLogLevel)
-        this.emit('eventData', { timestamp: timestampDate, logLevel: convertedLogLevel, eventName: rule.eventName, data })
+        this.emit('eventData', { timestamp: extractedTimestamp, logLevel: extractedLogLevel, eventName: rule.eventName, data })
       }
     } catch (e) {
       if (e instanceof SyntaxError) {
@@ -151,85 +198,179 @@ class LogProcessor extends EventEmitter {
 
   /**
    * Reads new lines from the log file and processes them.
+   *
+   * @param {Object} [options] - Optional parameters
+   * @param {boolean} [options.buildCacheOnly=false] - Whether to only build the event cache without emitting events
+   *
+   * @example
+   * await readNewLines({ buildCacheOnly: true })
    */
-  async #readNewLines() {
+  #processBufferedLogEvent({ buildCacheOnly }) {
+    if (this.#eventCache.has(this.#buffer)) {
+      dbg_fw(`Skipping cached event: ${this.#buffer}`)
+      return
+    }
+
+    dbg_fw(`Processing buffered event: ${this.#buffer}`)
+    const { timestamp, level } = this.#extractTimestampAndLevel(this.#buffer)
+    if (timestamp) {
+      if (!buildCacheOnly) {
+        rules.forEach(rule => {
+          this.#processLogEventWithRule(this.#buffer, rule, timestamp, level)
+        })
+      }
+
+      this.#eventCache.add(this.#buffer)
+      this.#buffer = ''  // Clear the buffer
+    }
+  }
+
+  /**
+   * Asynchronously reads the statistics of the log file.
+   *
+   * @returns {Promise<number|null>} A Promise that resolves with the size of the file in bytes, or null if the file does not exist.
+   *
+   * @example
+   * const stats = await readFileStats()
+   * if (stats) {
+   *   console.log(stats.size)  // Output will show the size of the file in bytes
+   * } else {
+   *   console.log('File does not exist')
+   * }
+   */
+  async #readFileSize() {
     try {
-      const fileSize = fs.statSync(this.#filePath).size
-      let start = this.#lastLineRead
-      if (fileSize < this.#lastLineRead) {
-        start = 0
-      }
+      const stats = await fs.promises.stat(this.#filePath)
+      return stats.size
+    } catch (error) {
+      this.#emitSystemMessage({ level: levels.error, message: `File read error: ${error.message}` })
+      return null
+    }
+  }
 
-      if (fileSize === this.#lastLineRead) {
-        // File size has not changed, skip reading.
-        return
-      }
+  /**
+   * Reads new lines from the log file and processes them.
+   */
+  async #readNewLines({ buildCacheOnly = false } = {}) {
+    this.#isReading = true
+    this.#shouldReadAgain = false
 
+    // we don't expect bufferOverlap at file start
+    let isBufferOverlapContinueReading = this.#nextStartPosition === 0
+
+    let dbg_overlappingLogEvents = 0
+    let dbg_logEvents = 0
+
+    const fileSize = await this.#readFileSize()
+    if (fileSize === null) return
+
+    if (fileSize >= this.#nextStartPosition) {
+      // GoBack NPosition to ensure buffer overlapping
+      this.#nextStartPosition = Math.max(0, this.#nextStartPosition - this.#overlappingGoBackNPositions)
+    } else {
+      // the file has been rotated. We clear the cache and read from file start
+      this.#nextStartPosition = 0
+      this.#eventCache.clear()
+      // we cannot have buffer overlap at the file start, but we set the flag to continue reading
+      isBufferOverlapContinueReading = true
+      this.#emitSystemMessage({ level: levels.notice, message: `The file ${this.#filePath} has been rotated!` })
+    }
+
+    try {
       // Log the status before reading lines
-      dbg_fw(`Reading lines from file. start: ${start}, fileSize: ${fileSize}, lastLineRead: ${this.#lastLineRead}`)
+      dbg_fw(`Reading lines from file. start: ${this.#nextStartPosition}, fileSize: ${fileSize}, lastLineRead: ${this.#lastPositionProcessed}`)
 
-      const fileStream = fs.createReadStream(this.#filePath, { start })
+      // Create a read stream starting from 'start'
+      const fileStream = fs.createReadStream(this.#filePath, { start: this.#nextStartPosition })
       const rl = readline.createInterface({ input: fileStream, terminal: false })
 
       rl.on('close', () => {
         // Process remaining buffer when readline interface is closed
         if (this.#buffer) {
-          const logMetadataPattern = /^(\w+-\d+ \d+:\d+:\d+\.\d+) \[.*?\] (\w+) /
-          const [, timestamp, level] = this.#buffer.match(logMetadataPattern) || []
-          if (timestamp && level) {
-            rules.forEach(rule => {
-              this.#processLogEventWithRule(this.#buffer, rule, timestamp, level)
-            })
-          }
-          this.#buffer = ''  // Clear the buffer
+          this.#processBufferedLogEvent( { buildCacheOnly })
         }
       })
 
+      let isBufferUpdated = false
       for await (const line of rl) {
-        const logMetadataPattern = /^(\w+-\d+ \d+:\d+:\d+\.\d+) \[.*?\] (\w+) /
-        const [, timestamp, level] = line.match(logMetadataPattern) || []
-        if (timestamp && level) {
+        const { timestamp } = this.#extractTimestampAndLevel(line)
+
+        // Check if the line is the beginning of a logEvent
+        if (timestamp) {
           if (this.#buffer) {
-            dbg_fw(`Processing buffered line: ${this.#buffer}`)
-            rules.forEach(rule => {
-              this.#processLogEventWithRule(this.#buffer, rule, timestamp, level)
-            })
-            this.#buffer = ''  // Clear the buffer after processing
+            if (this.#eventCache.has(this.#buffer)) {
+              dbg_overlappingLogEvents += 1
+              isBufferOverlapContinueReading = true
+            }
+
+            if (!isBufferOverlapContinueReading) {
+              dbg_fw(`No buffer overlap, we stop reading lines so we can go back`)
+              break
+            }
+
+            this.#processBufferedLogEvent({ buildCacheOnly })
           }
-          this.#buffer = line  // Store the new line in the buffer
+
+          this.#buffer = line // Store the new line in the buffer
+          isBufferUpdated = true
+          dbg_logEvents += 1
         } else {
-          this.#buffer += '\n' + line  // If line doesn't have timestamp and level, append to buffer
+          if (this.#buffer) {
+            // If line doesn't have timestamp and level, append to buffer
+            this.#buffer += '\n' + line
+            isBufferUpdated = true
+          }
         }
       }
 
-      // Log status after reading lines
-      dbg_fw(`Done reading new lines. Updating lastLineRead to ${fileSize}`)
-      this.#lastLineRead = fileSize
+      // Check is we update the buffer by reading from the file
+      if (isBufferUpdated) {
+        // We advanced our position in the file
+        this.#nextStartPosition = fileSize
+        dbg_fw(`Done reading new lines. lastPositionProcessed ${fileSize}`)
+      } else {
+        // we don't have a buffer overlap, we need to read again (will goBack NPosition to seek buffer overlapping)
+        dbg_fw(`Done reading new lines, but we had no new data to process (no buffer overlap)`)
+      }
+      dbg_fw({ dbg_overlappingLogEvents, dbg_newLogEvents: dbg_logEvents - dbg_overlappingLogEvents, dbg_cachedEvents: this.#eventCache.size })
     } catch (error) {
       this.#emitSystemMessage({ level: levels.error, message: `File read error: ${error.message}` })
+    } finally {
+      this.#isReading = false
+      if (this.#shouldReadAgain || !isBufferOverlapContinueReading) {
+        dbg_fw('Missed a file change. Reading new lines again...')
+        await this.#readNewLines()
+      }
     }
   }
 
   /**
-   * Starts watching the log file for changes.
+   * Starts watching the log file for changes and processes new lines accordingly.
    *
    * @example
-   * const logProcessor = new LogProcessor('path/to/log/file')
-   * logProcessor.startWatching()
+   * const logProcessor = new LogProcessor(config)
+   * await logProcessor.startWatching()
    */
-  startWatching() {
+  async startWatching() {
     if (this.#watcher) {
       return
     }
 
-    this.#readNewLines()
-
+    dbg_fw('Reading the file at start')
+    await this.#readNewLines({ buildCacheOnly: this.#atStartBuildEventCacheOnly })
     try {
       this.#watcher = chokidar.watch(this.#filePath)
 
-      this.#watcher.on('change', () => {
-        dbg_fw('File change detected. Reading new lines...')
-        this.#readNewLines()
+      this.#watcher.on('change', async () => {
+        dbg_fw('File change detected')
+        if (this.#isReading) {
+          dbg_fw('Skipping read due to ongoing read operation')
+          this.#shouldReadAgain = true
+          return
+        }
+
+        dbg_fw('Reading new lines...')
+        await this.#readNewLines()
       })
 
       this.#watcher.on('error', error => {
