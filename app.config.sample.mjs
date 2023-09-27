@@ -5,7 +5,7 @@
  * @property {string} type - Type of logger. Possible values: 'telegram', 'console', 'file'.
  * @property {string} [apiToken] - API Token for telegram. Required if type is 'telegram'.
  * @property {string[]} [chatIds] - Chat IDs for telegram. Required if type is 'telegram'.
- * @property {boolean|Function} [timestamp] - Whether to include timestamp. Can also be a formatting function.
+ * @property {boolean|string} [timestamp] - Whether to include timestamp. Can also be a formatting string (available formats https://day.js.org/docs/en/display/format).
  * @property {string} [filename] - File name for log. Required if type is 'file'.
  * @property {boolean} enabled - Whether this logger is enabled.
  *
@@ -60,7 +60,7 @@ export const config = [
       },
       {
         type: 'console',
-        timestamp: true,
+        timestamp: 'MMM DD, HH:MM:ss.SSS',
         enabled: true,
       },
       {
