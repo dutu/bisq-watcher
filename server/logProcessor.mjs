@@ -150,13 +150,8 @@ class LogProcessor extends EventEmitter {
     // Execute the regex and get the match result
     const match = re.exec(logEvent)
 
-    // If a match is found, return the captured groups, skipping the first element
-    // which is the entire matched string.
-    if (match) {
-      return match.slice(1)
-    } else {
-      return null
-    }
+    // If a match is found, return an array with the entire matched string and the captured groups
+    return match || null
   }
 
 

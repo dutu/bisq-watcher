@@ -77,7 +77,7 @@ export default [
   {
     eventName: 'SellerAsTakerTrade_DEPOSIT_CONFIRMED_IN_BLOCK_CHAIN',
     pattern: 'Set new state at SellerAsTakerTrade (id={0}): DEPOSIT_CONFIRMED_IN_BLOCK_CHAIN',
-    message: 'Deposit transaction for trade with ID {0} is confirmed. Wait until payment has started!',
+    message: '({0}) Deposit transaction is confirmed. Wait until payment has started!',
     sendToTelegram: true,
     enabled: true,
   },

@@ -128,7 +128,7 @@ export default class Logger {
       if (Array.isArray(eventData.data)) {
         eventData.data.forEach((item, index) => {
           const placeholder = `{${index}}`
-          ruleMessage = ruleMessage.replace(placeholder, item)
+          ruleMessage = ruleMessage.replace(placeholder, eventData.data[index + 1]).replace('{*}', eventData.data[0])
         })
       }
 
