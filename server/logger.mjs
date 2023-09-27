@@ -6,6 +6,17 @@ import { TelegramTransport } from './telegramTransport.mjs'
 import { formatTimestamp } from './util.mjs'
 
 /**
+ * A map for quickly accessing rules based on event names.
+ *
+ * This map is constructed by combining 'systemRules' and 'rules',
+ * and it uses the 'eventName' property of each rule as the key.
+ * The corresponding rule object is used as the value.
+ *
+ * @type {Map<string, Object>}
+ */
+const rulesMap = new Map([...systemRules, ...rules].map((rule) => [rule.eventName, rule]))
+
+/**
  * Logger class for handling and storing logs.
  * It uses winston under the hood for different types of logging.
  *
@@ -47,7 +58,6 @@ export default class Logger {
    */
   constructor(loggerConfig) {
     this.#loggerConfig = loggerConfig
-    this.#rules = [...systemRules, ...rules]
     const transports = []
 
     loggerConfig.forEach(config => {
@@ -118,7 +128,7 @@ export default class Logger {
    */
   #populateMessage = (transportConfig, { level, message, meta: eventData }) => {
     let populatedMessage
-    const rule = this.#rules.find(r => r.eventName === eventData.eventName)
+    const rule = rulesMap.get(eventData.eventName)
     if (rule) {
       const icon = icons[level] + ' ' || ''
       const timestamp = formatTimestamp(eventData.timestamp, transportConfig.timestamp)
@@ -126,10 +136,12 @@ export default class Logger {
       // Build the message using the rule's message template and eventData.data
       let ruleMessage = rule.message
       if (Array.isArray(eventData.data)) {
-        eventData.data.forEach((item, index) => {
-          const placeholder = `{${index}}`
-          ruleMessage = ruleMessage.replace(placeholder, eventData.data[index + 1]).replace('{*}', eventData.data[0])
-        })
+        for (let index = 1; index < eventData.data.length; index += 1) {
+          const placeholder = `{${index - 1}}`
+          ruleMessage = ruleMessage.replaceAll(placeholder, eventData.data[index])
+        }
+
+        ruleMessage = ruleMessage.replace('{*}', eventData.data[0])
       }
 
       populatedMessage = `${timestamp}${icon}[${level}] ${ruleMessage}`

@@ -19,6 +19,64 @@ const levelMap = {
 }
 
 /**
+ * A cache for storing precompiled RegExp objects.
+ *
+ * The keys are the pattern strings, and the values are
+ * the corresponding RegExp objects compiled from those patterns.
+ *
+ * @type {Map<string, RegExp>}
+ *
+ * @example
+ * formatCache.get('somePattern') // Returns the RegExp object for 'somePattern', if it exists in the cache
+ */
+const formatCache = new Map()
+
+/**
+ * Precompiles and caches regular expressions based on a set of rules.
+ *
+ * This function takes the 'pattern' from each rule, escapes any special
+ * regex characters, then compiles a new RegExp object which is cached
+ * for later use.
+ *
+ * @param {Array<Object>} rules - The rules containing patterns to be cached.
+ * @example
+ * // Suppose rules = [{ pattern: 'myPattern{1:uptoHyphen}' }]
+ * buildFormatCache(rules)
+ * // This would compile and cache a RegExp based on 'myPattern{1:uptoHyphen}'
+ */
+const buildFormatCache = function buildFormatCache(rules) {
+  rules.forEach((rule) => {
+    const pattern = rule.pattern
+
+    // Escape any special regex characters in the pattern
+    const escapedPattern = pattern.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
+
+    // Initialize format with escaped pattern enclosed by [\s\S]*
+    let format = `[\\s\\S]*${escapedPattern}[\\s\\S]*`
+
+    // Replace each placeholder in the escaped pattern with the corresponding regex
+    format = format.replace(/\\\{(\d+)(?::(\w+))?\\\}/g, (match, index, specifier) => {
+      // Check if we are at the last placeholder in the pattern
+      const isLastPlaceholder = escapedPattern.endsWith(match)
+
+      // If the specifier is 'uptoHyphen', use a specific regex pattern
+      if (specifier === 'uptoHyphen') {
+        return '([^\\-]+)(?:-[^,]+)?'
+      }
+
+      // Use a greedy capture (.+) only if it's the last placeholder and at the end of the pattern
+      return isLastPlaceholder ? '(.+)' : '(.+?)'
+    })
+
+    // Create a new RegExp object with the generated format
+    const re = new RegExp(format, 'm')
+    formatCache.set(pattern, re)
+  })
+}
+
+buildFormatCache(rules)
+
+/**
  * LogProcessor class for watching and processing log files.
  * It extends EventEmitter to emit events for specific log patterns.
  *
@@ -120,32 +178,8 @@ class LogProcessor extends EventEmitter {
    * // result will be ['o9OKUJa', 'active']
    */
   #matchPatternInLogEvent(pattern, logEvent) {
-    // Escape any special regex characters in the pattern
-    let escapedPattern = pattern.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
-
-    // Initialize format with escaped pattern enclosed by [\s\S]*
-    let format = `[\\s\\S]*${escapedPattern}[\\s\\S]*`
-
-    // Replace each placeholder in the escaped pattern with the corresponding regex
-    format = format.replace(/\\\{(\d+)(?::(\w+))?\\\}/g, (match, index, specifier) => {
-      // Check if we are at the last placeholder in the pattern
-      const isLastPlaceholder = escapedPattern.lastIndexOf(match) + match.length === escapedPattern.length
-
-      // If the specifier is 'uptoHyphen', use a specific regex pattern
-      if (specifier === 'uptoHyphen') {
-        return '([^\\-]+)(?:-[^,]+)?'
-      }
-
-      // Use a greedy capture (.+) only if it's the last placeholder and at the end of the pattern
-      if (isLastPlaceholder) {
-        return '(.+)'
-      }
-
-      return '(.+?)'
-    })
-
-    // Create a new RegExp object with the generated format
-    const re = new RegExp(format, 'm')
+    // Get the RegExp object for this pattern
+    const re = formatCache.get(pattern)
 
     // Execute the regex and get the match result
     const match = re.exec(logEvent)
@@ -210,7 +244,7 @@ class LogProcessor extends EventEmitter {
     const { timestamp, level } = this.#extractTimestampAndLevel(this.#buffer)
     if (timestamp) {
       if (!buildCacheOnly) {
-        rules.forEach(rule => {
+        rules.forEach((rule) => {
           this.#processLogEventWithRule(this.#buffer, rule, timestamp, level)
         })
       }
