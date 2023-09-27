@@ -5,12 +5,12 @@ import { config } from '../app.config.mjs'
 const logProcessors = []
 const loggerInstances = []
 
-config.forEach(({ logFile, logger }) => {
+config.forEach(({ logger, ...config }) => {
   // Initialize a Logger instance based on the logger config
   const loggerInstance = new Logger(logger)
 
   // Initialize a LogProcessor instance
-  const logProcessor = new LogProcessor(logFile)
+  const logProcessor = new LogProcessor(config)
 
   // Event listeners
   logProcessor.on('eventData', (eventData) => {
