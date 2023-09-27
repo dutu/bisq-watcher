@@ -1,6 +1,7 @@
 import LogProcessor from './logProcessor.mjs'
 import Logger from './logger.mjs'
 import { config } from '../app.config.mjs'
+import { levels } from './syslog.mjs'
 
 const logProcessors = []
 const loggerInstances = []
@@ -27,7 +28,13 @@ config.forEach(({ logger, ...config }) => {
 
 // Function to handle graceful shutdown
 const gracefulShutdown = async (signal) => {
-  console.log(`Received ${signal}, shutting down gracefully.`)
+  loggerInstances.forEach((logger) => logger.handleEventData({
+    eventName: `systemNotice`,
+    logLevel: levels.notice,
+    timestamp: new Date(),
+    data: [levels.notice, `Received ${signal}, shutting down gracefully...`]
+  }))
+  console.log(`Received ${signal}, shutting down gracefully...`)
 
   logProcessors.forEach(logProcessor => {
     logProcessor.stopWatching()
