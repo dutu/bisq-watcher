@@ -132,7 +132,7 @@ export default class Logger {
         })
       }
 
-      populatedMessage = `${timestamp}${icon}${ruleMessage}`
+      populatedMessage = `${timestamp}${icon}[${level}] ${ruleMessage}`
     } else {
       populatedMessage = message
     }
