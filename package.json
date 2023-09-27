@@ -11,7 +11,11 @@
     "url": "https://github.com/dutu/bisq-watcher"
   },
   "keywords": [
-    "bisq"
+    "bisq",
+    "bisq-network",
+    "monitoring",
+    "watcher",
+    "monitoring-tool"
   ],
   "scripts": {
     "start": "node --experimental-modules server/app.mjs"
