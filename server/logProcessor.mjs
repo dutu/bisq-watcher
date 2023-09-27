@@ -273,7 +273,7 @@ class LogProcessor extends EventEmitter {
       this.#eventCache.clear()
       // we cannot have buffer overlap at the file start, but we set the flag to continue reading
       isBufferOverlapContinueReading = true
-      this.#emitSystemMessage({ level: levels.notice, message: `The file ${this.#filePath} has been rotated!` })
+      this.#emitSystemMessage({ level: levels.notice, message: `The Bisq logfile ${this.#filePath} has been rotated!` })
     }
 
     try {
@@ -396,7 +396,7 @@ class LogProcessor extends EventEmitter {
       const eventData = {
         eventName: `systemNotice`,
         logLevel: levels.notice,
-        timestamp: Date.now(),
+        timestamp: new Date(),
         data: [levels.notice, 'Closing logger...']
       }
 

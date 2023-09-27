@@ -60,9 +60,8 @@ export default class Logger {
       if (config.type === 'console') {
         transport = new winston.transports.Console({
           format: winston.format.combine(
-
             winston.format.printf(populateMessage),
-            winston.format.colorize({ all: true, colors }),
+            winston.format.colorize({ all: true }),
           )
         })
       }
@@ -102,7 +101,7 @@ export default class Logger {
     })
 
     this.#logger = winston.createLogger({
-      levels,
+      levels: winston.config.syslog.levels,
       transports,
       exitOnError: false,
     })
@@ -168,7 +167,7 @@ export default class Logger {
     const eventData = {
       eventName: `systemNotice`,
       logLevel: levels.notice,
-      timestamp: Date.now(),
+      timestamp: new Date(),
       data: [levels.notice, 'Closing logger...']
     }
 
