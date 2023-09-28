@@ -1,11 +1,4 @@
 export const tradingRules = [
-  {
-    eventName: '4311643',
-    pattern: '4311643',
-    message: '{*}',
-    sendToTelegram: true
-  },
-
   /**
    * Step 1. Phase DEPOSIT_PAID
    */
