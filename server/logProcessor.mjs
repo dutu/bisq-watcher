@@ -74,8 +74,6 @@ const buildFormatCache = function buildFormatCache(rules) {
   })
 }
 
-buildFormatCache(rules)
-
 /**
  * LogProcessor class for watching and processing log files.
  * It extends EventEmitter to emit events for specific log patterns.
@@ -102,6 +100,7 @@ class LogProcessor extends EventEmitter {
   #isReading = false
   #shouldReadAgain = false
   #eventCache = new EventCache()
+  #progressLogging = {}
 
   /**
    * Constructs a new LogProcessor object.
@@ -120,22 +119,23 @@ class LogProcessor extends EventEmitter {
   }
 
   /**
-   * Extracts the date and level from a given log line, transforms the date into a Date object,
-   * and maps the level to a corresponding value.
+   * Extracts the date, level, thread name, and logger from a given log line,
+   * transforms the date into a Date object, and maps the level to a corresponding value.
    *
    * @param {string} line - The log line to be parsed.
-   * @returns {Object} An object containing the extracted Date object and mapped level.
+   * @returns {Object} An object containing the extracted Date object, mapped level,
+   *                   thread name, and logger.
    *
    * @example
    * const result = extractTimestampAndLevel("Sep-26 15:53:03.480 [PersistenceManager-read-MyBlindVoteList] INFO  b.c.p.PersistenceManager: Reading MyBlindVoteList completed in 12 ms")
-   * console.log(result) // { timestamp: Date object, level: 'info' }
+   * console.log(result) // { timestamp: Date object, level: 'info', thread: 'PersistenceManager-read-MyBlindVoteList', logger: 'b.c.p.PersistenceManager' }
    */
   #extractTimestampAndLevel(line) {
-    const regex = /^(\w+-\d+ \d+:\d+:\d+\.\d+) \[.*?\] (\w+) /
+    const regex = /^(\w+-\d+ \d+:\d+:\d+\.\d+) \[(.*?)\] (\w+)  (\w+(\.\w+)*):/
     const match = line.match(regex)
 
     if (!match) {
-      return { timestamp: null, level: null }
+      return { timestamp: null, level: null, thread: null, logger: null }
     }
 
     const logDateStr = match[1]
@@ -148,9 +148,11 @@ class LogProcessor extends EventEmitter {
       parsedDate.setFullYear(parsedDate.getFullYear() - 1)
     }
 
-    const level = levelMap[match[2]] || 'unknown'
+    const thread = match[2]
+    const level = levelMap[match[3]] || 'unknown'
+    const logger = match[4]
 
-    return { timestamp: parsedDate, level  }
+    return { timestamp: parsedDate, thread, level, logger }
   }
 
   /**
@@ -162,6 +164,26 @@ class LogProcessor extends EventEmitter {
    */
   #emitSystemMessage({ level, message }) {
     this.emit('eventData', { timestamp: new Date(), eventName: `system${capitalize(level)}`, logLevel: level, data: [level, message] })
+  }
+
+  #logProgress({ fileSize, line }) {
+    if (fileSize) {
+      this.#progressLogging = {
+        fileSize,
+        lastLoggedProgress: 0,
+        bytesRead: 0,
+      }
+    }
+    
+    if (line) {
+      this.#progressLogging.bytesRead += Buffer.from(line).length + 1  // Add 1 for the newline character
+      const progress = (this.#progressLogging.bytesRead / this.#progressLogging.fileSize) * 100
+
+      if (Math.floor(progress / 10) > this.#progressLogging.lastLoggedProgress) {
+        this.#emitSystemMessage({ level: levels.debug, message: `logProcessor: Reading the logfile at start... ${Math.floor(progress)}%` })
+        this.#progressLogging.lastLoggedProgress = Math.floor(progress / 10)
+      }
+    }
   }
 
   /**
@@ -280,7 +302,7 @@ class LogProcessor extends EventEmitter {
   /**
    * Reads new lines from the log file and processes them.
    */
-  async #readNewLines({ buildCacheOnly = false } = {}) {
+  async #readNewLines({ buildCacheOnly = false, logProgress = false } = {}) {
     this.#isReading = true
     this.#shouldReadAgain = false
 
@@ -304,6 +326,8 @@ class LogProcessor extends EventEmitter {
       isBufferOverlapContinueReading = true
       this.#emitSystemMessage({ level: levels.notice, message: `The Bisq logfile ${this.#filePath} has been rotated!` })
     }
+
+    if (logProgress) this.#logProgress({ fileSize })
 
     try {
       // Log the status before reading lines
@@ -350,6 +374,8 @@ class LogProcessor extends EventEmitter {
             isBufferUpdated = true
           }
         }
+
+        if (logProgress) this.#logProgress({ line })
       }
 
       // Check is we update the buffer by reading from the file
@@ -370,6 +396,8 @@ class LogProcessor extends EventEmitter {
         dbg_fw('Missed a file change. Reading new lines again...')
         await this.#readNewLines()
       }
+
+      if (logProgress) this.#emitSystemMessage({ level: levels.debug, message: `logProcessor: Reading the logfile at start... 100%` })
     }
   }
 
@@ -385,8 +413,15 @@ class LogProcessor extends EventEmitter {
       return
     }
 
-    dbg_fw('Reading the file at start')
-    await this.#readNewLines({ buildCacheOnly: this.#atStartBuildEventCacheOnly })
+    this.#emitSystemMessage({ level: levels.info, message: `logProcessor: Starting...` })
+
+    this.#emitSystemMessage({ level: levels.debug, message: `logProcessor: Building cache...` })
+    buildFormatCache(rules)
+
+    dbg_fw('Reading the logfile at start...')
+    this.#emitSystemMessage({ level: levels.debug, message: `logProcessor: Reading the logfile at start...` })
+    await this.#readNewLines({ buildCacheOnly: this.#atStartBuildEventCacheOnly, logProgress: true })
+
     try {
       this.#watcher = chokidar.watch(this.#filePath)
 
@@ -403,7 +438,7 @@ class LogProcessor extends EventEmitter {
       })
 
       this.#watcher.on('error', error => {
-        this.#emitSystemMessage({ level: levels.error, message: `Watcher error: ${error.message}`})
+        this.#emitSystemMessage({ level: levels.error, message: `File watcher error: ${error.message}`})
       })
 
       this.#emitSystemMessage({ level: levels.info, message: `Started watching file ${this.#filePath}` })
@@ -422,16 +457,11 @@ class LogProcessor extends EventEmitter {
    */
   stopWatching() {
     if (this.#watcher) {
-      const eventData = {
-        eventName: `systemNotice`,
-        logLevel: levels.notice,
-        timestamp: new Date(),
-        data: [levels.notice, 'Closing logger...']
-      }
-
+      this.#emitSystemMessage({ level: levels.notice, message: `logProcessor: Stopping...` })
       this.#watcher.close()
       this.#watcher = null
       this.#emitSystemMessage({ level: levels.notice, message: `Stopped watching file ${this.#filePath}` })
+      this.#emitSystemMessage({ level: levels.notice, message: `logProcessor: Stopped!` })
     }
   }
 }

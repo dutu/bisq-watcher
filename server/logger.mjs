@@ -69,6 +69,7 @@ export default class Logger {
       let transport
       if (config.type === 'console') {
         transport = new winston.transports.Console({
+          level: 'debug',
           format: winston.format.combine(
             winston.format.printf(populateMessage),
             winston.format.colorize({ all: true }),
@@ -79,6 +80,7 @@ export default class Logger {
       if (config.type === 'file') {
         const formatEventDataForFileOutput = this.#populateJson.bind(this, config)
         transport = new winston.transports.File({
+          level: 'debug',
           filename: config.filename,
           format: winston.format.combine(
             winston.format.printf(formatEventDataForFileOutput),

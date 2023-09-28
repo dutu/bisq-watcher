@@ -6,9 +6,19 @@ import { levels } from './syslog.mjs'
 const logProcessors = []
 const loggerInstances = []
 
-config.forEach(({ logger, ...config }) => {
+console.log(`bisq-watcher application has started!`)
+
+config.forEach(({ logger: loggerConfig, ...config }) => {
   // Initialize a Logger instance based on the logger config
-  const loggerInstance = new Logger(logger)
+  const loggerInstance = new Logger(loggerConfig)
+  loggerInstances.push(loggerInstance)
+
+  loggerInstance.handleEventData({
+    eventName: `systemInfo`,
+    logLevel: levels.info,
+    timestamp: new Date(),
+    data: [levels.info, `bisq-watcher application has started!`]
+  })
 
   // Initialize a LogProcessor instance
   const logProcessor = new LogProcessor(config)
@@ -22,13 +32,12 @@ config.forEach(({ logger, ...config }) => {
   logProcessor.startWatching()
 
   // Add to the array for later cleanup
-  loggerInstances.push(loggerInstance)
   logProcessors.push(logProcessor)
 })
 
 // Function to handle graceful shutdown
 const gracefulShutdown = async (signal) => {
-  loggerInstances.forEach((logger) => logger.handleEventData({
+  loggerInstances.forEach((loggerInstance) => loggerInstance.handleEventData({
     eventName: `systemNotice`,
     logLevel: levels.notice,
     timestamp: new Date(),
@@ -36,12 +45,12 @@ const gracefulShutdown = async (signal) => {
   }))
   console.log(`Received ${signal}, shutting down gracefully...`)
 
-  logProcessors.forEach(logProcessor => {
+  logProcessors.forEach((logProcessor) => {
     logProcessor.stopWatching()
   })
 
   // Wait for all loggerInstance.close() promises to resolve
-  await Promise.all(loggerInstances.map(loggerInstance => loggerInstance.close()))
+  await Promise.all(loggerInstances.map((loggerInstance) => loggerInstance.close()))
 
   process.exit()
 }
