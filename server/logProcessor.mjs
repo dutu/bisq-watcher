@@ -130,7 +130,7 @@ class LogProcessor extends EventEmitter {
    * const result = extractTimestampAndLevel("Sep-26 15:53:03.480 [PersistenceManager-read-MyBlindVoteList] INFO  b.c.p.PersistenceManager: Reading MyBlindVoteList completed in 12 ms")
    * console.log(result) // { timestamp: Date object, level: 'info', thread: 'PersistenceManager-read-MyBlindVoteList', logger: 'b.c.p.PersistenceManager' }
    */
-  #extractTimestampAndLevel(line) {
+  #extractLogEventMetadata(line) {
     const regex = /^(\w+-\d+ \d+:\d+:\d+\.\d+) \[(.*?)\] (\w+)  (\w+(\.\w+)*):/
     const match = line.match(regex)
 
@@ -217,26 +217,22 @@ class LogProcessor extends EventEmitter {
    *
    * @param {string} logEvent - The log event string to process.
    * @param {Object} rule - The rule object containing the pattern and event name.
-   * @param {string} extractedTimestamp - The timestamp extracted from the log event.
-   * @param {string} extractedLogLevel - The log level extracted from the log event.
-   *
-   * @example
-   * processLogEventWithRule(
-   *   'Set new state at BuyerAsMakerTrade (id=1234): DEPOSIT_CONFIRMED_IN_BLOCK_CHAIN',
-   *   {
-   *     eventName: 'DEPOSIT_CONFIRMED_IN_BLOCK_CHAIN',
-   *     pattern: 'Set new state at {0} (id={1}): {2}'
-   *   },
-   *   '2023-09-25T10:20:30Z',
-   *   'INFO'
-   * )
+   * @param {Object} metadata - An object containing various metadata like { timestamp, thread, level, logger }.
    */
-  #processLogEventWithRule = (logEvent, rule, extractedTimestamp, extractedLogLevel) => {
+  #processLogEventWithRule = (logEvent, rule, metadata) => {
+    if (rule.logger && rule.logger !== metadata.logger) {
+      return
+    }
+
+    if (rule.thread && rule.thread !== metadata.thread) {
+      return
+    }
+
     try {
       const match = this.#matchPatternInLogEvent(rule.pattern, logEvent)
       if (match) {
         const [...data] = match
-        this.emit('eventData', { timestamp: extractedTimestamp, logLevel: extractedLogLevel, eventName: rule.eventName, data })
+        this.emit('eventData', { timestamp: metadata.timestamp, logLevel: metadata.level, eventName: rule.eventName, data })
       }
     } catch (e) {
       if (e instanceof SyntaxError) {
@@ -263,11 +259,11 @@ class LogProcessor extends EventEmitter {
     }
 
     dbg_fw(`Processing buffered event: ${this.#buffer}`)
-    const { timestamp, level } = this.#extractTimestampAndLevel(this.#buffer)
-    if (timestamp) {
+    const metadata = this.#extractLogEventMetadata(this.#buffer)
+    if (metadata.timestamp) {
       if (!buildCacheOnly) {
         rules.forEach((rule) => {
-          this.#processLogEventWithRule(this.#buffer, rule, timestamp, level)
+          this.#processLogEventWithRule(this.#buffer, rule, metadata)
         })
       }
 
@@ -346,7 +342,7 @@ class LogProcessor extends EventEmitter {
 
       let isBufferUpdated = false
       for await (const line of rl) {
-        const { timestamp } = this.#extractTimestampAndLevel(line)
+        const { timestamp } = this.#extractLogEventMetadata(line)
 
         // Check if the line is the beginning of a logEvent
         if (timestamp) {
