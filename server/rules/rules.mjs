@@ -2,7 +2,7 @@
  * This file exports an array of rule objects for processing log events.
  *
  * Rules for trading related log events are defined and imported from './tradingRules.mjs'
- * Rules for Bisq application log events are defined and imported './applicationRules.mjs'
+ * Rules for Bisq application log events are defined and imported './bisqAppRules.mjs'
  *
  * @typedef {Object} Rule
  *
@@ -30,7 +30,7 @@
  * }
  */
 
-import applicationRules from './applicationRules.mjs'
+import applicationRules from './bisqAppRules.mjs'
 import tradingRules from './tradingRules.mjs'
 
 const rules= [...applicationRules, ...tradingRules]
