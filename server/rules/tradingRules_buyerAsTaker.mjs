@@ -1,3 +1,9 @@
+/**
+ * This file exports an array of trading-related rule objects.
+ *
+ * @see {@link ./rules.mjs} for the definition of Rule.
+ * @type {Rule[]}
+ */
 export const tradingRules =  [
 /*
   // For debugging only
@@ -7,7 +13,7 @@ export const tradingRules =  [
     pattern: 'BuyerAsTakerTrade',
     message: '{*}',
     sendToTelegram: true,
-    enabled: false,
+    disabled: true,
   },
 */
 
@@ -17,7 +23,7 @@ export const tradingRules =  [
     pattern: 'Set new state at BuyerAsTakerTrade (id={0}): TAKER_PUBLISHED_TAKER_FEE_TX',
     message: '({0}) New trade with ID {0}.',
     sendToTelegram: true,
-    enabled: true,
+    disabled: false,
   },
 
   /**
@@ -29,7 +35,7 @@ export const tradingRules =  [
     pattern: 'Set new state at BuyerAsTakerTrade (id={0}): BUYER_RECEIVED_DEPOSIT_TX_PUBLISHED_MSG',
     message: '({0}) Deposit transaction has been published. Wait for blockchain confirmation!',
     sendToTelegram: true,
-    enabled: true,
+    disabled: false,
   },
 
   /**
@@ -41,7 +47,7 @@ export const tradingRules =  [
     pattern: 'Set new state at BuyerAsTakerTrade (id={0}): DEPOSIT_CONFIRMED_IN_BLOCK_CHAIN',
     message: '({0}) Deposit transaction is confirmed. Open your Bisq application and start the payment',
     sendToTelegram: true,
-    enabled: true,
+    disabled: false,
   },
 
   /**
@@ -53,7 +59,7 @@ export const tradingRules =  [
     pattern: 'Set new state at BuyerAsTakerTrade (id={0}): BUYER_STORED_IN_MAILBOX_FIAT_PAYMENT_INITIATED_MSG',
     message: '({0}) You confirmed fiat payment has started. Wait until payment has arrived!',
     sendToTelegram: true,
-    enabled: true,
+    disabled: false,
   },
   {
     eventName: 'BuyerAsMakerTrade_BUYER_SENT_FIAT_PAYMENT_INITIATED_MSG',
@@ -61,7 +67,7 @@ export const tradingRules =  [
     pattern: 'Set new state at BuyerAsTakerTrade (id={0}): BUYER_SENT_FIAT_PAYMENT_INITIATED_MSG',
     message: '({0}) You confirmed fiat payment has started. Wait until payment has arrived!',
     sendToTelegram: true,
-    enabled: true,
+    disabled: false,
   },
 
   /**
@@ -73,6 +79,6 @@ export const tradingRules =  [
     pattern: 'Set new state at BuyerAsTakerTrade (id={0}): BUYER_RECEIVED_PAYOUT_TX_PUBLISHED_MSG',
     message: '({0}) The trade is completed.',
     sendToTelegram: true,
-    enabled: true,
+    disabled: false,
   },
 ]

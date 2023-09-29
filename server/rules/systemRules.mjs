@@ -1,3 +1,7 @@
+/**
+ * This file exports an array of system rule objects.
+ */
+
 export default [
   {
     eventName: 'systemError',
@@ -5,7 +9,6 @@ export default [
     pattern: '',
     message: '{0}',
     sendToTelegram: true,
-    enabled: true,
   },
   {
     eventName: 'systemNotice',
@@ -13,7 +16,6 @@ export default [
     pattern: '',
     message: '{0}',
     sendToTelegram: true,
-    enabled: true,
   },
   {
     eventName: 'systemInfo',
@@ -21,7 +23,6 @@ export default [
     pattern: '',
     message: '{0}',
     sendToTelegram: true,
-    enabled: true,
   },
   {
     eventName: 'systemDebug',
@@ -29,7 +30,6 @@ export default [
     pattern: '',
     message: '{0}',
     sendToTelegram: false,
-    enabled: true,
   },
   {
     eventName: 'telegramError',
@@ -37,6 +37,5 @@ export default [
     pattern: '',
     message: 'TelegramError: {0}',
     sendToTelegram: false,
-    enabled: true,
   },
 ]
