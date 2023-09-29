@@ -19,62 +19,6 @@ const levelMap = {
 }
 
 /**
- * A cache for storing precompiled RegExp objects.
- *
- * The keys are the pattern strings, and the values are
- * the corresponding RegExp objects compiled from those patterns.
- *
- * @type {Map<string, RegExp>}
- *
- * @example
- * formatCache.get('somePattern') // Returns the RegExp object for 'somePattern', if it exists in the cache
- */
-const formatCache = new Map()
-
-/**
- * Precompiles and caches regular expressions based on a set of rules.
- *
- * This function takes the 'pattern' from each rule, escapes any special
- * regex characters, then compiles a new RegExp object which is cached
- * for later use.
- *
- * @param {Array<Object>} rules - The rules containing patterns to be cached.
- * @example
- * // Suppose rules = [{ pattern: 'myPattern{1:uptoHyphen}' }]
- * buildFormatCache(rules)
- * // This would compile and cache a RegExp based on 'myPattern{1:uptoHyphen}'
- */
-const buildFormatCache = function buildFormatCache(rules) {
-  rules.forEach((rule) => {
-    const pattern = rule.pattern
-
-    // Escape any special regex characters in the pattern
-    const escapedPattern = pattern.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
-
-    // Initialize format with escaped pattern enclosed by [\s\S]*
-    let format = `[\\s\\S]*${escapedPattern}[\\s\\S]*`
-
-    // Replace each placeholder in the escaped pattern with the corresponding regex
-    format = format.replace(/\\\{(\d+)(?::(\w+))?\\\}/g, (match, index, specifier) => {
-      // Check if we are at the last placeholder in the pattern
-      const isLastPlaceholder = escapedPattern.endsWith(match)
-
-      // If the specifier is 'uptoHyphen', use a specific regex pattern
-      if (specifier === 'uptoHyphen') {
-        return '([^\\-]+)(?:-[^,]+)?'
-      }
-
-      // Use a greedy capture (.+) only if it's the last placeholder and at the end of the pattern
-      return isLastPlaceholder ? '(.+)' : '(.+?)'
-    })
-
-    // Create a new RegExp object with the generated format
-    const re = new RegExp(format, 'm')
-    formatCache.set(pattern, re)
-  })
-}
-
-/**
  * LogProcessor class for watching and processing log files.
  * It extends EventEmitter to emit events for specific log patterns.
  *
@@ -90,6 +34,7 @@ const buildFormatCache = function buildFormatCache(rules) {
  *            Event object has the format: { message: string }
  */
 class LogProcessor extends EventEmitter {
+  #config
   #filePath
   #atStartBuildEventCacheOnly
   #lastPositionProcessed = 0
@@ -101,6 +46,8 @@ class LogProcessor extends EventEmitter {
   #shouldReadAgain = false
   #eventCache = new EventCache()
   #progressLogging = {}
+// Cache for storing precompiled RegExp objects
+  #formatCache = new Map()
 
   /**
    * Constructs a new LogProcessor object.
@@ -113,9 +60,117 @@ class LogProcessor extends EventEmitter {
    */
   constructor(config) {
     super()
+    this.#config = config
     this.#filePath = resolveEnvVariablesInPath(config.logFile)
     this.#atStartBuildEventCacheOnly= config.debug?.atStartBuildEventCacheOnly ?? true
     this.#overlappingGoBackNPositions = config.debug?.overlappingGoBackNPositions ?? 20000
+  }
+
+  /**
+   * Precompiles and caches regular expressions based on a set of rules.
+   *
+   * This function takes the 'pattern' from each rule, escapes any special
+   * regex characters, then compiles a new RegExp object which is cached
+   * for later use.
+   *
+   * @param {Array<Object>} rules - The rules containing patterns to be cached.
+   * @example
+   * // Suppose rules = [{ pattern: 'myPattern{1:uptoHyphen}' }]
+   * buildFormatCache(rules)
+   * // This would compile and cache a RegExp based on 'myPattern{1:uptoHyphen}'
+   */
+  #buildFormatCache() {
+    /**
+     * Get enabled rules based on a precedence of configurations.
+     *
+     * Logic Description:
+     * - Start with defaultRules where disabled is false by default.
+     * - Overwrite with rules in config.overwriteRules.
+     * - If a rule is marked as disabled: true in all enabled transports, set it to disabled: true.
+     * - If a rule is marked as disabled: false in any enabled transport, set it to disabled: false.
+     *
+     * @param {Array<Object>} defaultRules - Array of default rules
+     * @param {Object} config - Configuration object
+     * @returns {Array<Object>} - Array of enabled rules
+     */
+    const getEnabledRules = (defaultRules, config) => {
+      const ruleMap = new Map()
+
+      // Initialize ruleMap with defaultRules (disabled is false by default)
+      defaultRules.forEach(rule => {
+        ruleMap.set(rule.eventName, { ...rule, disabled: rule.disabled || false })
+      })
+
+      // Variables to track the disabled state across transports
+      const transportDisabledFalseCount = {}
+      const transportDisabledTrueCount = {}
+      let transportCount = 0
+
+      // Update ruleMap with rules from enabled transports in config
+      config.transports.forEach(transport => {
+        if (transport.disabled) return
+
+        transportCount += 1
+
+        transport.overwriteRules?.forEach(overwriteRule => {
+          if (overwriteRule.disabled === false) {
+            transportDisabledFalseCount[overwriteRule.eventName] = (transportDisabledFalseCount[overwriteRule.eventName] || 0) + 1
+          }
+
+          if (overwriteRule.disabled === true) {
+            transportDisabledTrueCount[overwriteRule.eventName] = (transportDisabledTrueCount[overwriteRule.eventName] || 0) + 1
+          }
+        })
+      })
+
+      config.overwriteRules?.forEach(overwriteRule => {
+        if ('disabled' in overwriteRule) {
+          ruleMap.set(overwriteRule.eventName, { ...overwriteRule })
+        }
+
+        if (transportDisabledTrueCount[overwriteRule.eventName] === transportCount) {
+          ruleMap.set(overwriteRule.eventName, { ...overwriteRule, disabled: true })
+        }
+
+        if (overwriteRule.eventName in transportDisabledFalseCount && transportDisabledFalseCount[overwriteRule.eventName] > 0) {
+          ruleMap.set(overwriteRule.eventName, { ...overwriteRule, disabled: false })
+        }
+      })
+
+      // Filter out enabled rules (those that are not disabled)
+      const enabledRules = [...ruleMap.values()].filter(rule => !rule.disabled)
+
+      return enabledRules
+    }
+
+    const enabledRules = getEnabledRules(rules, this.#config)
+    enabledRules.forEach((rule) => {
+      const pattern = rule.pattern
+
+      // Escape any special regex characters in the pattern
+      const escapedPattern = pattern.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
+
+      // Initialize format with escaped pattern enclosed by [\s\S]*
+      let format = `[\\s\\S]*${escapedPattern}[\\s\\S]*`
+
+      // Replace each placeholder in the escaped pattern with the corresponding regex
+      format = format.replace(/\\\{(\d+)(?::(\w+))?\\\}/g, (match, index, specifier) => {
+        // Check if we are at the last placeholder in the pattern
+        const isLastPlaceholder = escapedPattern.endsWith(match)
+
+        // If the specifier is 'uptoHyphen', use a specific regex pattern
+        if (specifier === 'uptoHyphen') {
+          return '([^\\-]+)(?:-[^,]+)?'
+        }
+
+        // Use a greedy capture (.+) only if it's the last placeholder and at the end of the pattern
+        return isLastPlaceholder ? '(.+)' : '(.+?)'
+      })
+
+      // Create a new RegExp object with the generated format
+      const re = new RegExp(format, 'm')
+      this.#formatCache.set(pattern, re)
+    })
   }
 
   /**
@@ -412,7 +467,7 @@ class LogProcessor extends EventEmitter {
     this.#emitSystemMessage({ level: levels.info, message: `logProcessor: Starting...` })
 
     this.#emitSystemMessage({ level: levels.debug, message: `logProcessor: Building cache...` })
-    buildFormatCache(rules)
+    this.#buildFormatCache()
 
     dbg_fw('Reading the logfile at start...')
     this.#emitSystemMessage({ level: levels.debug, message: `logProcessor: Reading the logfile at start...` })
