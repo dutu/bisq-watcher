@@ -131,7 +131,7 @@ class LogProcessor extends EventEmitter {
    * console.log(result) // { timestamp: Date object, level: 'info', thread: 'PersistenceManager-read-MyBlindVoteList', logger: 'b.c.p.PersistenceManager' }
    */
   #extractLogEventMetadata(line) {
-    const regex = /^(\w+-\d+ \d+:\d+:\d+\.\d+) \[(.*?)\] (\w+)  (\w+(\.\w+)*):/
+    const regex = /^(\w+-\d+ \d+:\d+:\d+\.\d+) \[(.*?)\] (\w+)  (.*?):/
     const match = line.match(regex)
 
     if (!match) {
