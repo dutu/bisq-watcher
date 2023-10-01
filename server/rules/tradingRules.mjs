@@ -18,7 +18,7 @@ const tradingRules_common =  [
     message: `({0}) Your offer with ID {0} was taken.`,
     level: 'notice',
     sendToTelegram: true,
-    enabled: true,
+    isActive: true,
   },
 /*
   {

@@ -1,8 +1,8 @@
+import fs from 'node:fs'
+import readline from 'node:readline'
 import { EventEmitter } from 'eventemitter3'
 import Debug from 'debug'
-import fs from 'fs'
 import chokidar from 'chokidar'
-import readline from 'readline'
 import { resolveEnvVariablesInPath, capitalize } from './util.mjs'
 import { levels } from './syslog.mjs'
 import rules from './rules/rules.mjs'
@@ -102,8 +102,8 @@ class LogProcessor extends EventEmitter {
       })
 
       // Variables to track the disabled state across transports
-      const transportDisabledFalseCount = {}
-      const transportDisabledTrueCount = {}
+      const transportEnableCount = {}
+      const transportDisableCount = {}
       let transportCount = 0
 
       // Update ruleMap with rules from enabled transports in config
@@ -113,34 +113,36 @@ class LogProcessor extends EventEmitter {
         transportCount += 1
 
         transport.overwriteRules?.forEach(overwriteRule => {
-          if (overwriteRule.disabled === false) {
-            transportDisabledFalseCount[overwriteRule.eventName] = (transportDisabledFalseCount[overwriteRule.eventName] || 0) + 1
+          if (overwriteRule.activation === 'active') {
+            transportEnableCount[overwriteRule.eventName] = (transportEnableCount[overwriteRule.eventName] || 0) + 1
           }
 
-          if (overwriteRule.disabled === true) {
-            transportDisabledTrueCount[overwriteRule.eventName] = (transportDisabledTrueCount[overwriteRule.eventName] || 0) + 1
+          if (overwriteRule.activation === 'inactive') {
+            transportDisableCount[overwriteRule.eventName] = (transportDisableCount[overwriteRule.eventName] || 0) + 1
           }
         })
       })
 
       config.overwriteRules?.forEach(overwriteRule => {
-        if ('disabled' in overwriteRule) {
-          ruleMap.set(overwriteRule.eventName, { ...overwriteRule })
+        if (overwriteRule.activation === 'active') {
+          ruleMap.set(overwriteRule.eventName, { ...overwriteRule, isActive: true })
         }
 
-        if (transportDisabledTrueCount[overwriteRule.eventName] === transportCount) {
-          ruleMap.set(overwriteRule.eventName, { ...overwriteRule, disabled: true })
+        if (overwriteRule.activation === 'inactive') {
+          ruleMap.set(overwriteRule.eventName, { ...overwriteRule, isActive: false })
         }
 
-        if (overwriteRule.eventName in transportDisabledFalseCount && transportDisabledFalseCount[overwriteRule.eventName] > 0) {
-          ruleMap.set(overwriteRule.eventName, { ...overwriteRule, disabled: false })
+        if (transportDisableCount[overwriteRule.eventName] === transportCount) {
+          ruleMap.set(overwriteRule.eventName, { ...overwriteRule, isActive: false })
+        }
+
+        if (overwriteRule.eventName in transportEnableCount && transportEnableCount[overwriteRule.eventName] > 0) {
+          ruleMap.set(overwriteRule.eventName, { ...overwriteRule, isActive: true })
         }
       })
 
-      // Filter out enabled rules (those that are not disabled)
-      const enabledRules = [...ruleMap.values()].filter(rule => !rule.disabled)
-
-      return enabledRules
+      // Filter and return active rules
+      return [...ruleMap.values()].filter(rule => rule.isActive)
     }
 
     const enabledRules = getEnabledRules(rules, this.#config)

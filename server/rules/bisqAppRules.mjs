@@ -32,7 +32,7 @@ export default [
     pattern: "MobileNotificationService: Send message: '{0}'",
     message: '{0}',
     sendToTelegram: true,
-    disabled: true,
+    isActive: false,
   },
   {
     eventName: 'BlockchainDownloadProgressTracker',
@@ -40,7 +40,7 @@ export default [
     pattern: 'Downloading block chain of size {0}.',
     message: 'Synchronizing Bitcoin blockchain...',
     sendToTelegram: false,
-    disabled: false,
+    isActive: false,
   },
   {
     eventName: 'End of sync detected',
@@ -48,6 +48,6 @@ export default [
     pattern: 'End of sync detected at height {0}.',
     message: 'Synchronized with Bitcoin blockchain at block {0}',
     sendToTelegram: false,
-    disabled: false,
+    isActive: false,
   },
 ]

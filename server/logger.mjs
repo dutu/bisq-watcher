@@ -46,7 +46,7 @@ export default class Logger {
   /**
    * Creates a Logger instance with the specified configuration.
    *
-   * @param {Array} loggerConfig - The logger configuration.
+   * @param {Object} loggerConfig - The logger configuration.
    *
    * Example:
    * ```javascript
@@ -60,14 +60,13 @@ export default class Logger {
     this.#loggerConfig = loggerConfig
     const transports = []
 
-    loggerConfig.forEach(config => {
-      if (!config.enabled) {
+    loggerConfig.transports.forEach((transportConfig) => {
+      if (transportConfig.disabled === true) {
         return
       }
 
-      const populateMessage = this.#populateMessage.bind(this, config)
       let transport
-      if (config.type === 'console') {
+      if (transportConfig.type === 'console') {
         transport = new winston.transports.Console({
           level: 'debug',
           format: winston.format.combine(
@@ -77,21 +76,21 @@ export default class Logger {
         })
       }
 
-      if (config.type === 'file') {
-        const formatEventDataForFileOutput = this.#populateJson.bind(this, config)
+      if (transportConfig.type === 'file') {
+        const formatEventDataForFileOutput = this.#populateJson.bind(this, transportConfig)
         transport = new winston.transports.File({
           level: 'debug',
-          filename: config.filename,
+          filename: transportConfig.filename,
           format: winston.format.combine(
             winston.format.printf(formatEventDataForFileOutput),
           )
         })
       }
 
-      if (config.type === 'telegram') {
+      if (transportConfig.type === 'telegram') {
         transport = new TelegramTransport({
-          apiToken: config.apiToken,
-          chatIds: config.chatIds,
+          apiToken: transportConfig.apiToken,
+          chatIds: transportConfig.chatIds,
           format: winston.format.combine(
             winston.format.printf(populateMessage),
           )
@@ -109,6 +108,8 @@ export default class Logger {
         })
       }
 
+      const ruleMAp = this.#buildRules(transportConfig)
+      const populateMessage = this.#populateMessage.bind(this, transportConfig, ruleMap)
       transports.push(transport)
     })
 
@@ -117,6 +118,91 @@ export default class Logger {
       transports,
       exitOnError: false,
     })
+  }
+
+  #buildRules(loggerConfig, transportConfig) {
+    const ruleMap = new Map()
+
+    const validateOverwriteRule = (rule) => {
+        if (typeof rule.message !== 'string') {
+          return false
+        }
+
+    }
+
+    const overwriteRule = (rule) => {
+      const overwrittenRule = ruleMap.get(rule.eventName)
+      Object.keys(rule).forEach((key) => {
+        if (['message', 'level', 'sendToTelegram'].includes(key)) {
+          overwrittenRule[key] = rule[key]
+        }
+
+        if (key === 'activation') {
+          if (rule.activation === 'active')  overwrittenRule.isActive = true
+          if (rule.activation === 'inactive')  overwrittenRule.isActive = false
+        }
+      })
+    }
+
+    if (Array.isArray(loggerConfig.overwriteRules)) {
+      loggerConfig.overwriteRules.forEach((rule) => overwriteRule(rule))
+    }
+
+    if (Array.isArray(transportConfig.overwriteRules)) {
+      transportConfig.overwriteRules.forEach((rule) => overwriteRule(rule))
+    }
+
+
+
+    // Initialize ruleMap with defaultRules (disabled is false by default)
+    rules.forEach(rule => {
+      ruleMap.set(rule.eventName, { ...rule, disabled: rule.disabled || false })
+    })
+
+    if (Array.isArray(loggerConfig.overwriteRules)) {
+      loggerConfig.overwriteRules.forEach((rule) => overwriteRule(rule))
+    }
+
+    // Variables to track the disabled state across transports
+    const transportDisabledFalseCount = {}
+    const transportDisabledTrueCount = {}
+    let transportCount = 0
+
+    // Update ruleMap with rules from enabled transports in config
+    config.transports.forEach(transport => {
+      if (transport.disabled) return
+
+      transportCount += 1
+
+      transport.overwriteRules?.forEach(overwriteRule => {
+        if (overwriteRule.disabled === false) {
+          transportDisabledFalseCount[overwriteRule.eventName] = (transportDisabledFalseCount[overwriteRule.eventName] || 0) + 1
+        }
+
+        if (overwriteRule.disabled === true) {
+          transportDisabledTrueCount[overwriteRule.eventName] = (transportDisabledTrueCount[overwriteRule.eventName] || 0) + 1
+        }
+      })
+    })
+
+    config.overwriteRules?.forEach(overwriteRule => {
+      if ('disabled' in overwriteRule) {
+        ruleMap.set(overwriteRule.eventName, { ...overwriteRule })
+      }
+
+      if (transportDisabledTrueCount[overwriteRule.eventName] === transportCount) {
+        ruleMap.set(overwriteRule.eventName, { ...overwriteRule, disabled: true })
+      }
+
+      if (overwriteRule.eventName in transportDisabledFalseCount && transportDisabledFalseCount[overwriteRule.eventName] > 0) {
+        ruleMap.set(overwriteRule.eventName, { ...overwriteRule, disabled: false })
+      }
+    })
+
+    // Filter out enabled rules (those that are not disabled)
+    const enabledRules = [...ruleMap.values()].filter(rule => !rule.disabled)
+
+    return enabledRules
   }
 
   /**

@@ -28,6 +28,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
         [null, {\
           "packageLocation": "./",\
           "packageDependencies": [\
+            ["ajv", "npm:8.12.0"],\
             ["chokidar", "npm:3.5.3"],\
             ["crypto", "npm:1.0.1"],\
             ["dayjs", "npm:1.11.10"],\
@@ -170,6 +171,17 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["fast-deep-equal", "npm:3.1.3"],\
             ["fast-json-stable-stringify", "npm:2.1.0"],\
             ["json-schema-traverse", "npm:0.4.1"],\
+            ["uri-js", "npm:4.4.1"]\
+          ],\
+          "linkType": "HARD"\
+        }],\
+        ["npm:8.12.0", {\
+          "packageLocation": "./.yarn/cache/ajv-npm-8.12.0-3bf6e30741-4dc13714e3.zip/node_modules/ajv/",\
+          "packageDependencies": [\
+            ["ajv", "npm:8.12.0"],\
+            ["fast-deep-equal", "npm:3.1.3"],\
+            ["json-schema-traverse", "npm:1.0.0"],\
+            ["require-from-string", "npm:2.0.2"],\
             ["uri-js", "npm:4.4.1"]\
           ],\
           "linkType": "HARD"\
@@ -376,6 +388,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./",\
           "packageDependencies": [\
             ["bisq-watcher", "workspace:."],\
+            ["ajv", "npm:8.12.0"],\
             ["chokidar", "npm:3.5.3"],\
             ["crypto", "npm:1.0.1"],\
             ["dayjs", "npm:1.11.10"],\
@@ -1750,6 +1763,13 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["json-schema-traverse", "npm:0.4.1"]\
           ],\
           "linkType": "HARD"\
+        }],\
+        ["npm:1.0.0", {\
+          "packageLocation": "./.yarn/cache/json-schema-traverse-npm-1.0.0-fb3684f4f0-02f2f466cd.zip/node_modules/json-schema-traverse/",\
+          "packageDependencies": [\
+            ["json-schema-traverse", "npm:1.0.0"]\
+          ],\
+          "linkType": "HARD"\
         }]\
       ]],\
       ["json-stringify-safe", [\
@@ -2390,6 +2410,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packagePeers": [\
             "@types/request",\
             "request"\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["require-from-string", [\
+        ["npm:2.0.2", {\
+          "packageLocation": "./.yarn/cache/require-from-string-npm-2.0.2-8557e0db12-a03ef68954.zip/node_modules/require-from-string/",\
+          "packageDependencies": [\
+            ["require-from-string", "npm:2.0.2"]\
           ],\
           "linkType": "HARD"\
         }]\

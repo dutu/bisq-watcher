@@ -1,5 +1,5 @@
 /**
- * This file exports an array of rule objects for processing log events.
+ * This module exports an array of rule objects for processing log events.
  *
  * Rules for trading related log events are defined and imported from './tradingRules.mjs'
  * Rules for Bisq application log events are defined and imported './bisqAppRules.mjs'
@@ -14,9 +14,9 @@
  * @property {string} message - A template string for formatting the message to emit.
  *   Use `{index}` as a placeholder for extracted variables.
  *   Use '{*}' as a placeholder for the entire match.
- * @property {'crit'|'alert'|'error'|'warning'|'info'|'debug'} [level='info'] - Overwrites the severity level of the original log event from Bisq log.
+ * @property {'crit'|'alert'|'error'|'warning'|'info'|'notice'|debug'} [level='info'] - Overwrites the severity level of the original log event from Bisq log.
  * @property {boolean} [sendToTelegram] - Flag indicating whether to send the message to Telegram.
- * @property {boolean} [disabled=false] - Flag indicating whether the rule is active or not.
+ * @property {boolean} [isActive=true] - Flag indicating whether the rule is active or not.
  *
  * @example
  * {
@@ -30,8 +30,8 @@
  * }
  */
 
-import applicationRules from './bisqAppRules.mjs'
+import bisqAppRules from './bisqAppRules.mjs'
 import tradingRules from './tradingRules.mjs'
 
-const rules= [...applicationRules, ...tradingRules]
+const rules= [...bisqAppRules, ...tradingRules]
 export default rules

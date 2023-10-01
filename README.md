@@ -4,6 +4,8 @@ This application serves as a monitoring tool specifically designed for the Bisq 
 
 The application offers a flexible logging system with multiple output formats, including console-based logs, file storage, and Telegram bot notifications. This multifaceted approach ensures you have constant and convenient access to your Bisq application's operational status.
 
+The application is especially useful to send Bisq trade notifications on Telegram.
+
 Table of Contents
 ---
 
@@ -67,11 +69,21 @@ git clone https://github.com/dutu/bisq-watcher
 
 ## App Configuration
 
-* Rename Configuration Sample File: make a copy of the `app.config.sample.mjs` file and rename it to `app.config.mjs`:
-
+* Rename Configuration Sample File: make a copy of the `app.config.sample.mjs` file and rename it to `app.config.mjs`.
 
 * Edit the `app.config.mjs` file to specify the Bisq logfile location and tailor the watcher to your specific requirements.
- > This configuration file includes settings for console logging, file logging, and a Telegram bot.
+  > This configuration file includes settings for console logging, file logging, and a Telegram bot.
+
+
+### Quick Configuration Guide
+
+Here are some common fields you might need to update:
+
+- `logFile`: The location of the Bisq log file.
+- `transports`: Array of logging transports. Available types are 'telegram', 'console', and 'file'.
+- `enabled`: Set this to `true` to enable a particular logging transport.
+
+For advanced configurations and all available options, please refer to the JSDoc comments within `app.config.sample.mjs`.
 
 
 ## Telegram Integration
