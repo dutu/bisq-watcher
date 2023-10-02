@@ -44,11 +44,11 @@ export const resolveEnvVariablesInPath = function resolveEnvVariablesInPath (fil
 /**
  * Formats the timestamp based on configuration.
  *
- * @param {Date} timestamp - The original timestamp as a Date object.
  * @param {(boolean|string)} timestampConfig - The configuration for the timestamp.
- * If `true`, uses the standard ISO format.
- * If `false`, returns an empty string.
- * If a string, uses it as the date format.
+ *    If `true`, uses the standard ISO format.
+ *    If `false`, returns an empty string.
+ *    If a string, uses it as the date format.
+ * @param {Date} timestamp - The original timestamp as a Date object.
  *
  * @returns {string} - The formatted timestamp.
  *
@@ -65,7 +65,7 @@ export const resolveEnvVariablesInPath = function resolveEnvVariablesInPath (fil
  * #formatTimestamp(new Date('2023-09-21T20:00:00.000Z'), 'YYYY-MM-DD')
  * // Returns: '[2023-09-21]'
  */
-export const formatTimestamp = function formatTimestamp (timestamp, timestampConfig) {
+export const formatTimestamp = function formatTimestamp (timestampConfig, timestamp) {
   if (timestampConfig === true) {
     return `[${timestamp.toISOString()}] `
   }

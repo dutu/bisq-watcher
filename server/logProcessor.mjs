@@ -46,7 +46,9 @@ class LogProcessor extends EventEmitter {
   #shouldReadAgain = false
   #eventCache = new EventCache()
   #progressLogging = {}
-// Cache for storing precompiled RegExp objects
+  // active rules
+  #ruleMap
+  // Cache for storing precompiled RegExp objects
   #formatCache = new Map()
 
   /**
@@ -66,6 +68,74 @@ class LogProcessor extends EventEmitter {
     this.#overlappingGoBackNPositions = config.debug?.overlappingGoBackNPositions ?? 20000
   }
 
+
+  /**
+   * Build rule map for with enabled rules, based on a precedence of configurations.
+   *
+   * Logic Description:
+   * - Start with defaultRules where disabled is false by default.
+   * - Overwrite with rules in config.overwriteRules.
+   * - If a rule is marked as disabled: true in all enabled transports, set it to disabled: true.
+   * - If a rule is marked as disabled: false in any enabled transport, set it to disabled: false.
+   */
+  #getEnabledRules = () => {
+    const defaultRules = rules
+    const config = this.#config
+    this.#ruleMap = new Map()
+
+    // Initialize ruleMap with defaultRules (isActive is true by default)
+    defaultRules.forEach(rule => {
+      this.#ruleMap.set(rule.eventName, { ...rule, isActive: rule.isActive ?? true })
+    })
+
+    // Variables to track the disabled state across transports
+    const transportEnableCount = {}
+    const transportDisableCount = {}
+    let transportCount = 0
+
+    // Update ruleMap with rules from enabled transports in config
+    config.transports.forEach(transport => {
+      if (transport.disabled) return
+
+      transportCount += 1
+
+      transport.overwriteRules?.forEach(overwriteRule => {
+        if (overwriteRule.activation === 'active') {
+          transportEnableCount[overwriteRule.eventName] = (transportEnableCount[overwriteRule.eventName] || 0) + 1
+        }
+
+        if (overwriteRule.activation === 'inactive') {
+          transportDisableCount[overwriteRule.eventName] = (transportDisableCount[overwriteRule.eventName] || 0) + 1
+        }
+      })
+    })
+
+    config.overwriteRules?.forEach(overwriteRule => {
+      if (overwriteRule.activation === 'active') {
+        this.#ruleMap.set(overwriteRule.eventName, { ...overwriteRule, isActive: true })
+      }
+
+      if (overwriteRule.activation === 'inactive') {
+        this.#ruleMap.set(overwriteRule.eventName, { ...overwriteRule, isActive: false })
+      }
+
+      if (transportDisableCount[overwriteRule.eventName] === transportCount) {
+        this.#ruleMap.set(overwriteRule.eventName, { ...overwriteRule, isActive: false })
+      }
+
+      if (overwriteRule.eventName in transportEnableCount && transportEnableCount[overwriteRule.eventName] > 0) {
+        this.#ruleMap.set(overwriteRule.eventName, { ...overwriteRule, isActive: true })
+      }
+    })
+
+    // Remove inactive rules
+    this.#ruleMap.forEach((rule) => {
+      if (!rule.isActive) {
+        this.#ruleMap.delete(rule.eventName)
+      }
+    })
+  }
+
   /**
    * Precompiles and caches regular expressions based on a set of rules.
    *
@@ -80,73 +150,7 @@ class LogProcessor extends EventEmitter {
    * // This would compile and cache a RegExp based on 'myPattern{1:uptoHyphen}'
    */
   #buildFormatCache() {
-    /**
-     * Get enabled rules based on a precedence of configurations.
-     *
-     * Logic Description:
-     * - Start with defaultRules where disabled is false by default.
-     * - Overwrite with rules in config.overwriteRules.
-     * - If a rule is marked as disabled: true in all enabled transports, set it to disabled: true.
-     * - If a rule is marked as disabled: false in any enabled transport, set it to disabled: false.
-     *
-     * @param {Array<Object>} defaultRules - Array of default rules
-     * @param {Object} config - Configuration object
-     * @returns {Array<Object>} - Array of enabled rules
-     */
-    const getEnabledRules = (defaultRules, config) => {
-      const ruleMap = new Map()
-
-      // Initialize ruleMap with defaultRules (disabled is false by default)
-      defaultRules.forEach(rule => {
-        ruleMap.set(rule.eventName, { ...rule, disabled: rule.disabled || false })
-      })
-
-      // Variables to track the disabled state across transports
-      const transportEnableCount = {}
-      const transportDisableCount = {}
-      let transportCount = 0
-
-      // Update ruleMap with rules from enabled transports in config
-      config.transports.forEach(transport => {
-        if (transport.disabled) return
-
-        transportCount += 1
-
-        transport.overwriteRules?.forEach(overwriteRule => {
-          if (overwriteRule.activation === 'active') {
-            transportEnableCount[overwriteRule.eventName] = (transportEnableCount[overwriteRule.eventName] || 0) + 1
-          }
-
-          if (overwriteRule.activation === 'inactive') {
-            transportDisableCount[overwriteRule.eventName] = (transportDisableCount[overwriteRule.eventName] || 0) + 1
-          }
-        })
-      })
-
-      config.overwriteRules?.forEach(overwriteRule => {
-        if (overwriteRule.activation === 'active') {
-          ruleMap.set(overwriteRule.eventName, { ...overwriteRule, isActive: true })
-        }
-
-        if (overwriteRule.activation === 'inactive') {
-          ruleMap.set(overwriteRule.eventName, { ...overwriteRule, isActive: false })
-        }
-
-        if (transportDisableCount[overwriteRule.eventName] === transportCount) {
-          ruleMap.set(overwriteRule.eventName, { ...overwriteRule, isActive: false })
-        }
-
-        if (overwriteRule.eventName in transportEnableCount && transportEnableCount[overwriteRule.eventName] > 0) {
-          ruleMap.set(overwriteRule.eventName, { ...overwriteRule, isActive: true })
-        }
-      })
-
-      // Filter and return active rules
-      return [...ruleMap.values()].filter(rule => rule.isActive)
-    }
-
-    const enabledRules = getEnabledRules(rules, this.#config)
-    enabledRules.forEach((rule) => {
+    this.#ruleMap.forEach((rule) => {
       const pattern = rule.pattern
 
       // Escape any special regex characters in the pattern
@@ -258,7 +262,7 @@ class LogProcessor extends EventEmitter {
    */
   #matchPatternInLogEvent(pattern, logEvent) {
     // Get the RegExp object for this pattern
-    const re = formatCache.get(pattern)
+    const re = this.#formatCache.get(pattern)
 
     // Execute the regex and get the match result
     const match = re.exec(logEvent)
@@ -319,7 +323,7 @@ class LogProcessor extends EventEmitter {
     const metadata = this.#extractLogEventMetadata(this.#buffer)
     if (metadata.timestamp) {
       if (!buildCacheOnly) {
-        rules.forEach((rule) => {
+        this.#ruleMap.forEach((rule) => {
           this.#processLogEventWithRule(this.#buffer, rule, metadata)
         })
       }
@@ -469,6 +473,7 @@ class LogProcessor extends EventEmitter {
     this.#emitSystemMessage({ level: levels.info, message: `logProcessor: Starting...` })
 
     this.#emitSystemMessage({ level: levels.debug, message: `logProcessor: Building cache...` })
+    this.#getEnabledRules()
     this.#buildFormatCache()
 
     dbg_fw('Reading the logfile at start...')

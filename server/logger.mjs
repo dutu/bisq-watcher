@@ -6,17 +6,6 @@ import { TelegramTransport } from './telegramTransport.mjs'
 import { formatTimestamp } from './util.mjs'
 
 /**
- * A map for quickly accessing rules based on event names.
- *
- * This map is constructed by combining 'systemRules' and 'rules',
- * and it uses the 'eventName' property of each rule as the key.
- * The corresponding rule object is used as the value.
- *
- * @type {Map<string, Object>}
- */
-const rulesMap = new Map([...systemRules, ...rules].map((rule) => [rule.eventName, rule]))
-
-/**
  * Logger class for handling and storing logs.
  * It uses winston under the hood for different types of logging.
  *
@@ -41,7 +30,6 @@ const rulesMap = new Map([...systemRules, ...rules].map((rule) => [rule.eventNam
 export default class Logger {
   #logger
   #loggerConfig
-  #rules
 
   /**
    * Creates a Logger instance with the specified configuration.
@@ -65,11 +53,18 @@ export default class Logger {
         return
       }
 
+      const ruleMap = this.#buildTransportRules(loggerConfig, transportConfig)
+      const filterMessage = winston.format(this.#filterMessage.bind(this, ruleMap))()
+      const formatTimestamp = winston.format(this.#formatTimestamp.bind(this, transportConfig.timestamp))()
+
       let transport
       if (transportConfig.type === 'console') {
+        const populateMessage = this.#populateMessage.bind(this, ruleMap)
         transport = new winston.transports.Console({
           level: 'debug',
           format: winston.format.combine(
+            filterMessage,
+            formatTimestamp,
             winston.format.printf(populateMessage),
             winston.format.colorize({ all: true }),
           )
@@ -82,16 +77,19 @@ export default class Logger {
           level: 'debug',
           filename: transportConfig.filename,
           format: winston.format.combine(
+            filterMessage,
             winston.format.printf(formatEventDataForFileOutput),
           )
         })
       }
 
       if (transportConfig.type === 'telegram') {
+        const populateMessage = this.#populateMessage.bind(this, ruleMap)
         transport = new TelegramTransport({
           apiToken: transportConfig.apiToken,
           chatIds: transportConfig.chatIds,
           format: winston.format.combine(
+            filterMessage,
             winston.format.printf(populateMessage),
           )
         })
@@ -108,8 +106,6 @@ export default class Logger {
         })
       }
 
-      const ruleMAp = this.#buildRules(transportConfig)
-      const populateMessage = this.#populateMessage.bind(this, transportConfig, ruleMap)
       transports.push(transport)
     })
 
@@ -120,130 +116,117 @@ export default class Logger {
     })
   }
 
-  #buildRules(loggerConfig, transportConfig) {
-    const ruleMap = new Map()
+  /**
+   * Private method to build the ruleMap applicable for a transport,
+   * by merging the default rules with overwriteRules from the transportConfig and the loggerConfig.
+   *
+   * @param {Object} loggerConfig - The logger configuration.
+   * @param {Object} transportConfig - The transport configuration.
+   * @returns {Map} - the ruleMap applicable for the transport
+   */
+  #buildTransportRules(loggerConfig, transportConfig) {
+    // Initialize Rules map by combining 'systemRules' and 'rules' (isActive is true by default)
+    const ruleMap = new Map([...systemRules, ...rules].map((rule) => [rule.eventName, { ...rule, isActive: rule.isActive ?? true }]))
 
-    const validateOverwriteRule = (rule) => {
-        if (typeof rule.message !== 'string') {
-          return false
-        }
-
-    }
-
-    const overwriteRule = (rule) => {
+    // Overwrites the rule from 'ruleMap'
+    const overwriteRule = function overwriteRule(rule) {
       const overwrittenRule = ruleMap.get(rule.eventName)
-      Object.keys(rule).forEach((key) => {
-        if (['message', 'level', 'sendToTelegram'].includes(key)) {
-          overwrittenRule[key] = rule[key]
-        }
+      if (rule.activation === 'inactive') {
+        overwrittenRule.isActive = false
+        // we don't want to modify other parameters if rule is marked as 'inactive'
+        return
+      }
 
+      Object.keys(rule).forEach((key) => {
         if (key === 'activation') {
-          if (rule.activation === 'active')  overwrittenRule.isActive = true
-          if (rule.activation === 'inactive')  overwrittenRule.isActive = false
+          // Mark the rule active, since 'activation' key can only be 'active' at this point
+            overwrittenRule.isActive = true
+        } else {
+          overwrittenRule[key] = rule[key]
         }
       })
     }
 
-    if (Array.isArray(loggerConfig.overwriteRules)) {
+    if (loggerConfig.overwriteRules) {
       loggerConfig.overwriteRules.forEach((rule) => overwriteRule(rule))
     }
 
-    if (Array.isArray(transportConfig.overwriteRules)) {
+    if (transportConfig.overwriteRules) {
       transportConfig.overwriteRules.forEach((rule) => overwriteRule(rule))
     }
 
-
-
-    // Initialize ruleMap with defaultRules (disabled is false by default)
-    rules.forEach(rule => {
-      ruleMap.set(rule.eventName, { ...rule, disabled: rule.disabled || false })
+    // Remove inactive rules
+    ruleMap.forEach((rule) => {
+      if (!rule.isActive)
+      ruleMap.delete(rule.eventName)
     })
+    return ruleMap
+  }
 
-    if (Array.isArray(loggerConfig.overwriteRules)) {
-      loggerConfig.overwriteRules.forEach((rule) => overwriteRule(rule))
+  /**
+   * Filters out messages without rule (isActive was false)
+   *
+   * @param {Map} ruleMap - The rule map
+   * @param {Object} info - The winston log entry.
+   * @return {Object|false} - Returns original info object if rule exists, and false otherwise
+   */
+  #filterMessage(ruleMap, info) {
+    const eventData = info.meta
+    return ruleMap.has(eventData.eventName) ? info : false
+  }
+
+  /**
+   * Private for adding and formatting the timestamp based on transport configuration.
+   * It either adds a formatted timestamp to the log entry
+   * or removes the timestamp from the log entry
+   * based on the presence of the timestamp formatter.
+   *
+   * @param {string|boolean} timestampConfig - The timestamp formatter
+   * @param {Object} info - The winston log entry.
+   */
+  #formatTimestamp(timestampConfig, info) {
+    if (timestampConfig) {
+      const eventData = info.meta
+      info.timestamp = formatTimestamp(timestampConfig, eventData.timestamp)
+    } else {
+      delete info.timestamp
     }
 
-    // Variables to track the disabled state across transports
-    const transportDisabledFalseCount = {}
-    const transportDisabledTrueCount = {}
-    let transportCount = 0
-
-    // Update ruleMap with rules from enabled transports in config
-    config.transports.forEach(transport => {
-      if (transport.disabled) return
-
-      transportCount += 1
-
-      transport.overwriteRules?.forEach(overwriteRule => {
-        if (overwriteRule.disabled === false) {
-          transportDisabledFalseCount[overwriteRule.eventName] = (transportDisabledFalseCount[overwriteRule.eventName] || 0) + 1
-        }
-
-        if (overwriteRule.disabled === true) {
-          transportDisabledTrueCount[overwriteRule.eventName] = (transportDisabledTrueCount[overwriteRule.eventName] || 0) + 1
-        }
-      })
-    })
-
-    config.overwriteRules?.forEach(overwriteRule => {
-      if ('disabled' in overwriteRule) {
-        ruleMap.set(overwriteRule.eventName, { ...overwriteRule })
-      }
-
-      if (transportDisabledTrueCount[overwriteRule.eventName] === transportCount) {
-        ruleMap.set(overwriteRule.eventName, { ...overwriteRule, disabled: true })
-      }
-
-      if (overwriteRule.eventName in transportDisabledFalseCount && transportDisabledFalseCount[overwriteRule.eventName] > 0) {
-        ruleMap.set(overwriteRule.eventName, { ...overwriteRule, disabled: false })
-      }
-    })
-
-    // Filter out enabled rules (those that are not disabled)
-    const enabledRules = [...ruleMap.values()].filter(rule => !rule.disabled)
-
-    return enabledRules
+    return info
   }
 
   /**
    * Private method to populate log messages based on the rule that matches the event data.
    *
-   * @param {Object} params - Object containing the timestamp, level, and message.
-   * @param {string} params.level - The level of the log.
-   * @param {string} params.message - The message of the log.
-   * @param {string} params.meta - The eventData of the log.
+   * @param {Map} ruleMap - Transport's rule map .
+   * @param {Object} info - The object containing the winston log entry.
    * @returns {string} - The populated log message.
    */
-  #populateMessage = (transportConfig, { level, message, meta: eventData }) => {
-    let populatedMessage
-    const rule = rulesMap.get(eventData.eventName)
-    if (rule) {
-      const icon = icons[level] + ' ' || ''
-      const timestamp = formatTimestamp(eventData.timestamp, transportConfig.timestamp)
+  #populateMessage = (ruleMap, info) => {
+    const { level, message, timestamp = '', meta: eventData } = info
+    const rule = ruleMap.get(eventData.eventName)
+    const icon = icons[level] + ' ' || ''
 
-      // Build the message using the rule's message template and eventData.data
-      let ruleMessage = rule.message
-      if (Array.isArray(eventData.data)) {
-        for (let index = 1; index < eventData.data.length; index += 1) {
-          const placeholder = `{${index - 1}}`
-          ruleMessage = ruleMessage.replaceAll(placeholder, eventData.data[index])
-        }
-
-        ruleMessage = ruleMessage.replace('{*}', eventData.data[0])
+    // Build the message using the rule's message template and eventData.data
+    let ruleMessage = rule.message
+    if (Array.isArray(eventData.data)) {
+      for (let index = 1; index < eventData.data.length; index += 1) {
+        const placeholder = `{${index - 1}}`
+        ruleMessage = ruleMessage.replaceAll(placeholder, eventData.data[index])
       }
 
-      populatedMessage = `${timestamp}${icon}[${level}] ${ruleMessage}`
-    } else {
-      populatedMessage = message
+      ruleMessage = ruleMessage.replace('{*}', eventData.data[0])
     }
 
+    const populatedMessage = `${timestamp}${icon}[${level}] ${ruleMessage}`
     return populatedMessage
   }
 
-  #populateJson(transportConfig, { level, message, meta: eventData }) {
+  #populateJson(transportConfig, info) {
+    const eventData = info.meta
     let formattedMessage = {
       ...eventData,
-      message: this.#populateMessage(transportConfig, { level: eventData.logLevel, message: '', meta: eventData })
+      message: this.#populateMessage(transportConfig, info)
     }
 
     return JSON.stringify(formattedMessage, null, 2)
