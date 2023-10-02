@@ -4,6 +4,20 @@
 
 export default [
   {
+    eventName: 'systemCrit',
+    logger: 'system',
+    pattern: '',
+    message: '{0}',
+    sendToTelegram: true,
+  },
+  {
+    eventName: 'systemAlert',
+    logger: 'system',
+    pattern: '',
+    message: '{0}',
+    sendToTelegram: true,
+  },
+  {
     eventName: 'systemError',
     logger: 'system',
     pattern: '',
