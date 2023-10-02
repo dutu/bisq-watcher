@@ -169,12 +169,12 @@ export default class Logger {
    * Filters out messages without rule (isActive was false)
    *
    * @param {Map} ruleMap - The rule map
-   * @param {Object} info - The winston log entry.
-   * @return {Object|false} - Returns original info object if rule exists, and false otherwise
+   * @param {Object} info - The log information object.
+   * @return {Object|false} - Returns the log information object if rule exists, otherwise false
    */
   #filterMessage(ruleMap, info) {
-    const eventData = info.meta
-    return ruleMap.has(eventData.eventName) ? info : false
+    const { meta } = info
+    return ruleMap.has(meta.eventName) ? info : false
   }
 
   /**
@@ -188,8 +188,8 @@ export default class Logger {
    */
   #formatTimestamp(timestampConfig, info) {
     if (timestampConfig) {
-      const eventData = info.meta
-      info.timestamp = formatTimestamp(timestampConfig, eventData.timestamp)
+      const { meta } = info
+      info.timestamp = formatTimestamp(timestampConfig, meta.timestamp)
     } else {
       delete info.timestamp
     }
