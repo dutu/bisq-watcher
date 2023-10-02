@@ -6,9 +6,9 @@ It allows you to set up one or multiple watchers, each capable of monitoring a s
 
 Each watcher is comprised of three core components:
 
-    * **File Watcher**: Monitors the `bisq.log` file.
-    * **Log Processor**: Parses and extracts relevant log data based on predefined rules.
-    * **Logger**: Sends notifications via multiple transports — currently supporting **console**, **file**, and **Telegram**.
+* **File Watcher**: Monitors the `bisq.log` file.
+* **Log Processor**: Parses and extracts relevant log data based on predefined rules.
+* **Logger**: Sends notifications via multiple transports — currently supporting **console**, **file**, and **Telegram**.
 
 Whether you're interested in real-time trade updates on Telegram or just keeping an eye on the logs, bisq-watcher has you covered.
 
@@ -47,11 +47,11 @@ Before you proceed, ensure you have installed the following software:
 
 * Download and install Node.js from the [official website](https://nodejs.org/en).
 
-### Yarn
+### Corepack / Yarn
 
-* After installing Node.js, you can install Yarn using npm:
-```js
-npm install -g yarn
+* Enable corepack (the preferred way to manage Yarn):
+```shell
+corepack enable
 ```
 
 ### PM2
@@ -172,7 +172,7 @@ cd [output_directory]
 
 * To stop the application, use:
 ```shell
-pm2 stop app.mjs
+pm2 stop bisq-watcher
 ```
 
 # Versioning and Changelog
