@@ -68,7 +68,7 @@ const validateAppConfig = function validateAppConfig() {
  * Validates rules structure.
  * Returns:
  *    0: if no errors
- *    4: if the "rules" is malformatted
+ *    4: if any rule is malformatted
  */
 const validateRules = function validateRules() {
   const validation = validateObjectAgainstSchema(rules, rulesSchema)
