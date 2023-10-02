@@ -9,7 +9,7 @@
  * @property {Array} properties.watchers.items - Specifies each watcher configuration object.
  * @property {Object} properties.watchers.items.properties - The properties of each watcher.
  * @property {Object} properties.watchers.items.properties.name - The name of the watcher.
- * @property {Object} properties.watchers.items.properties.logFile - The location of the log file for the watcher.
+ * @property {Object} properties.watchers.items.properties.logFile - The location of the Bisq log file for the watcher.
  * @property {Object} properties.watchers.items.properties.transports - The configuration for the array of transport objects.
  * @property {Object} properties.watchers.items.properties.debug - The debug configurations for the watcher.
  * @property {Object} properties.watchers.items.properties.overwriteRules - The configuration for the array of overwrite rules.
@@ -40,7 +40,7 @@ const configSchema = {
                 timestamp: {
                   type: ['boolean', 'string']
                 },
-                level: { enum: ['crit', 'alert', 'error', 'warning', 'info', 'debug'] },
+                level: { enum: ['crit', 'alert', 'error', 'warning', 'info', 'notice', 'debug'] },
                 disabled: { type: 'boolean' },
                 overwriteRules: {
                   type: 'array',
@@ -49,7 +49,7 @@ const configSchema = {
                     properties: {
                       eventName: { type: 'string' },
                       message: { type: 'string' },
-                      level: { enum: ['crit', 'alert', 'error', 'warning', 'info', 'debug'] },
+                      level: { enum: ['crit', 'alert', 'error', 'warning', 'info', 'notice', 'debug'] },
                       sendToTelegram: { type: 'boolean' },
                       activation: { enum: ['active', 'inactive'] }
                     },
@@ -74,7 +74,7 @@ const configSchema = {
               properties: {
                 eventName: { type: 'string' },
                 message: { type: 'string' },
-                level: { enum: ['crit', 'alert', 'error', 'warning', 'info', 'debug'] },
+                level: { enum: ['crit', 'alert', 'error', 'warning', 'info', 'notice', 'debug'] },
                 sendToTelegram: { type: 'boolean' },
                 activation: { enum: ['active', 'inactive'] }
               },
