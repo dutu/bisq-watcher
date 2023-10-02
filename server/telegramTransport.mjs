@@ -70,8 +70,9 @@ export class TelegramTransport extends Transport {
       return
     }
 
+    const messageToSend = info[Symbol.for('message')] || info.message
     const promises = this.#config.chatIds.map((chatId) => {
-      return this.#telegramBot.sendMessage(chatId, `${info.message}`)
+      return this.#telegramBot.sendMessage(chatId, `${messageToSend}`)
     })
 
     Promise.all(promises)

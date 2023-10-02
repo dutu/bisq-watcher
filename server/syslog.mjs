@@ -30,7 +30,8 @@ export const icons = {
   error: '🔺',
   warning: '⚠️',
   notice: '🔹',
-  info: '▫️',
+  info: '💡',
+//  info: '▫️',
 /*
   warning: '🔸',
   error: '❌',

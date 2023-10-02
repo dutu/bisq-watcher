@@ -54,43 +54,45 @@ export default class Logger {
       }
 
       const ruleMap = this.#buildTransportRules(loggerConfig, transportConfig)
-      const filterMessage = winston.format(this.#filterMessage.bind(this, ruleMap))()
-      const formatTimestamp = winston.format(this.#formatTimestamp.bind(this, transportConfig.timestamp))()
+      const filterMessage = winston.format((info) => this.#filterMessage(ruleMap, info))()
+      const formatTimestamp = winston.format((info) => this.#formatTimestamp(transportConfig.timestamp, info))()
+      const populateMessage = winston.format((info) => this.#populateMessage(ruleMap, info))()
 
       let transport
       if (transportConfig.type === 'console') {
-        const populateMessage = this.#populateMessage.bind(this, ruleMap)
         transport = new winston.transports.Console({
           level: 'debug',
           format: winston.format.combine(
             filterMessage,
             formatTimestamp,
-            winston.format.printf(populateMessage),
+            populateMessage,
+            winston.format.printf(this.#formatConsoleMessage),
             winston.format.colorize({ all: true }),
           )
         })
       }
 
       if (transportConfig.type === 'file') {
-        const formatEventDataForFileOutput = this.#populateJson.bind(this, transportConfig)
         transport = new winston.transports.File({
           level: 'debug',
           filename: transportConfig.filename,
           format: winston.format.combine(
             filterMessage,
-            winston.format.printf(formatEventDataForFileOutput),
+            formatTimestamp,
+            populateMessage,
+            winston.format.printf(this.#formatFileMessage),
           )
         })
       }
 
       if (transportConfig.type === 'telegram') {
-        const populateMessage = this.#populateMessage.bind(this, ruleMap)
         transport = new TelegramTransport({
           apiToken: transportConfig.apiToken,
           chatIds: transportConfig.chatIds,
           format: winston.format.combine(
             filterMessage,
-            winston.format.printf(populateMessage),
+            populateMessage,
+            winston.format.printf(this.#formatTelegramMessage),
           )
         })
 
@@ -117,7 +119,7 @@ export default class Logger {
   }
 
   /**
-   * Private method to build the ruleMap applicable for a transport,
+   * Builds the ruleMap applicable for a transport,
    * by merging the default rules with overwriteRules from the transportConfig and the loggerConfig.
    *
    * @param {Object} loggerConfig - The logger configuration.
@@ -176,13 +178,13 @@ export default class Logger {
   }
 
   /**
-   * Private for adding and formatting the timestamp based on transport configuration.
-   * It either adds a formatted timestamp to the log entry
-   * or removes the timestamp from the log entry
-   * based on the presence of the timestamp formatter.
+   * Adds or removes a timestamp from the log entry based on the transport configuration.
+   *
+   * If a timestamp formatter is present, it adds a formatted timestamp to the log entry.
+   * If not, it removes the timestamp property from the log entry.
    *
    * @param {string|boolean} timestampConfig - The timestamp formatter
-   * @param {Object} info - The winston log entry.
+   * @param {Object} info - The log information object.
    */
   #formatTimestamp(timestampConfig, info) {
     if (timestampConfig) {
@@ -196,40 +198,90 @@ export default class Logger {
   }
 
   /**
-   * Private method to populate log messages based on the rule that matches the event data.
+   * Populates message and updates level of the object containing the winston log entry,
+   * based on the rule that matches the event data.
    *
    * @param {Map} ruleMap - Transport's rule map .
-   * @param {Object} info - The object containing the winston log entry.
-   * @returns {string} - The populated log message.
+   * @param {Object} info - The log information object. Contains properties for level, message, timestamp, and meta.
+   * @returns {Object} - Updated log information object with populated message and new level.
    */
-  #populateMessage = (ruleMap, info) => {
-    const { level, message, timestamp = '', meta: eventData } = info
-    const rule = ruleMap.get(eventData.eventName)
-    const icon = icons[level] + ' ' || ''
+  #populateMessage(ruleMap, info) {
+    const { meta } = info
+    const rule = ruleMap.get(meta.eventName)
 
-    // Build the message using the rule's message template and eventData.data
-    let ruleMessage = rule.message
-    if (Array.isArray(eventData.data)) {
-      for (let index = 1; index < eventData.data.length; index += 1) {
+    // Populated the message using the rule's message template and eventData.data
+    let populatedMessage = rule.message
+    if (Array.isArray(meta.data)) {
+      for (let index = 1; index < meta.data.length; index += 1) {
         const placeholder = `{${index - 1}}`
-        ruleMessage = ruleMessage.replaceAll(placeholder, eventData.data[index])
+        populatedMessage = populatedMessage.replaceAll(placeholder, meta.data[index])
       }
 
-      ruleMessage = ruleMessage.replace('{*}', eventData.data[0])
+      populatedMessage = populatedMessage.replace('{*}', meta.data[0])
     }
 
-    const populatedMessage = `${timestamp}${icon}[${level}] ${ruleMessage}`
-    return populatedMessage
+    // Update message
+    info[Symbol.for('message')] = populatedMessage
+    info.message = populatedMessage
+
+    // Update level if overridden by rule
+    if (rule.level) {
+      info[Symbol.for('level')] = rule.level
+      info.level = rule.level
+    }
+
+    return info
   }
 
-  #populateJson(transportConfig, info) {
-    const eventData = info.meta
-    let formattedMessage = {
-      ...eventData,
-      message: this.#populateMessage(transportConfig, info)
-    }
+  /**
+   * Formats a message for console output.
+   *
+   * @param {Object} info - The log information object. Contains properties for level, message, timestamp, and meta.
+   * @returns {string} The formatted log message for console output.
+   */
+  #formatConsoleMessage(info) {
+    const {
+      [Symbol.for('level')]: level,
+      [Symbol.for('message')]: message,
+      timestamp,
+      meta,
+    } = info
 
-    return JSON.stringify(formattedMessage, null, 2)
+    const loggerName = `${meta.loggerName}: ` || ''
+    const icon = icons[level] + ' ' || ''
+    return `${timestamp}${loggerName}${icon}[${level}] ${message}`
+  }
+
+  /**
+   * Formats a message for telegram output.
+   *
+   * @param {Object} info - The log information object. Contains properties for level, message, timestamp, and meta.
+   * @returns {string} The formatted log message for telegram output.
+   */
+  #formatTelegramMessage(info) {
+    const {
+      [Symbol.for('level')]: level,
+      [Symbol.for('message')]: message
+    } = info
+    const icon = icons[level] + ' ' || ''
+    return `${icon}[${level}] ${message}`
+  }
+
+  /**
+   * Formats a message for file output.
+   *
+   * @param {Object} info - The log information object. Contains properties for level, message, timestamp, and meta.
+   * @returns {string} The formatted log message for telegram output.
+   */
+  #formatFileMessage(info) {
+    const {
+      [Symbol.for('level')]: level,
+      [Symbol.for('message')]: message,
+      timestamp,
+      meta,
+    } = info
+
+    return JSON.stringify({ timestamp, level, message, meta }, null, 2)
   }
 
   /**
@@ -238,7 +290,7 @@ export default class Logger {
    * @param {Object} eventData - The event data.
    */
   handleEventData(eventData) {
-    this.#logger.log({ level: eventData.logLevel, message: '', meta: eventData })
+    this.#logger.log({ level: eventData.logLevel, message: '', meta: {...eventData, loggerName: this.#loggerConfig.name } })
   }
 
   /**
