@@ -1,10 +1,17 @@
 # Overview
 
-This application serves as a monitoring tool specifically designed for the Bisq application, focusing on real-time log file tracking and processing. Built using Node.js, it is a cross-platform solution that can be run on Windows, Linux, and macOS.
+**Bisq-watcher** is a highly customizable monitoring tool for the Bisq decentralized exchange.
+Developed with Node.js, it's compatible across Windows, Linux, and macOS platforms.
+It allows you to set up one or multiple watchers, each capable of monitoring a specific Bisq instance running on your computer. 
 
-The application offers a flexible logging system with multiple output formats, including console-based logs, file storage, and Telegram bot notifications. This multifaceted approach ensures you have constant and convenient access to your Bisq application's operational status.
+Each watcher is comprised of three core components:
 
-The application is especially useful to send Bisq trade notifications on Telegram.
+    * **File Watcher**: Monitors the `bisq.log` file.
+    * **Log Processor**: Parses and extracts relevant log data based on predefined rules.
+    * **Logger**: Sends notifications via multiple transports — currently supporting **console**, **file**, and **Telegram**.
+
+Whether you're interested in real-time trade updates on Telegram or just keeping an eye on the logs, bisq-watcher has you covered.
+
 
 Table of Contents
 ---
@@ -59,10 +66,12 @@ yarn global add pm2
 
 * Before cloning the repository, make sure Git is installed on your system. If it's not, you can download and install it from the [official Git website](https://git-scm.com/).
 
-* After installing Git, open a terminal and run the following command to clone the repository:
+* After installing Git, open a terminal and run the following command to clone the repository and select the latest release:
 
 ```shell
 git clone https://github.com/dutu/bisq-watcher
+cd bisq-watcher
+git checkout v0.1.0
 ```
 
 # Configuration
@@ -81,7 +90,6 @@ Here are some common fields you might need to update:
 
 - `logFile`: The location of the Bisq log file.
 - `transports`: Array of logging transports. Available types are 'telegram', 'console', and 'file'.
-- `enabled`: Set this to `true` to enable a particular logging transport.
 
 For advanced configurations and all available options, please refer to the JSDoc comments within `app.config.sample.mjs`.
 
