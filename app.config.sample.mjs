@@ -24,8 +24,8 @@
  * @property {string} [apiToken] - API Token for telegram. Required if type is 'telegram'.
  * @property {string[]} [chatIds] - Chat IDs for telegram. Required if type is 'telegram'.
  * @property {boolean|string} [timestamp=flase] - Whether to include timestamp. Can also be a formatting string (see https://day.js.org/docs/en/display/format).
- * @property {'crit'|'alert'|'error'|'warning'|'info'|'debug'} [level] - Maximum log level the logger transport will log.
- * @property {boolean} [disabled=false] - Whether this logger is disabled.
+ * @property {'crit'|'alert'|'error'|'warning'|'info'|'notice'|'debug'} [level] - Maximum log level the logger transport will log.
+ * @property {boolean} [disabled=false] - Whether this logger is enabled.
  * @property {OverwriteRuleConfig[]} [overwriteRules] - Array of rule configurations for the logger.
  */
 
@@ -34,13 +34,10 @@
  *
  * @typedef {Object} OverwriteRuleConfig
  * @property {string} eventName - The name of the rule to overwrite.
- * @property {string} [logger] - The origin logger of the Bisq log event.
- * @property {string} [thread] - The origin thread of the Bisq log event.
- * @property {string} [pattern] - The string pattern to match against the Bisq log event.
  * @property {string} [message] - A template string for formatting the message to emit.
- * @property {'crit'|'alert'|'error'|'warning'|'info'|'debug'} [level='info'] - overwrites the severity level of the original log event from Bisq log.
+ * @property {'crit'|'alert'|'error'|'warning'|'info'|'debug'} [level='info'] - Overwrites the severity level of the original log event from Bisq log.
  * @property {boolean} [sendToTelegram=true] - Flag indicating whether to send the message to Telegram.
- * @property {boolean} [disabled=true] - Flag indicating whether the rule is active or not.
+ * @property {'active'|'inactive'} [activation] - Forces a rule do become active or not for respective watcher or transport
  *
  * This key is optional. When present, it is used to overwrite the default rules
  * found in the '/server/rules/' folder. Specific `eventName` parameters will
@@ -53,11 +50,11 @@
  *
  * @typedef {Object} DebugConfig
  * @property {boolean} [atStartBuildEventCacheOnly=flase] - Flag indicating whether existing logfile should be read and log event to be sent to loggers.
- * @property {number} [overlappingGoBackNPositions] - Size in bytes for buffer overlapping when reading Bsiq logfile.
+ * @property {number} [overlappingGoBackNPositions=20000] - Size in bytes for buffer overlapping when reading Bisq logfile.
  * @property {boolean} [useHash=true] - Flag indicating whether cached log events should be stored in clear text or hashed.
  */
 
-export const watchers = {
+export default {
   watchers: [
     {
       name: 'main',
@@ -67,31 +64,33 @@ export const watchers = {
           type: 'telegram',
           apiToken: "624126:AAEfjLOoYRQ4kvEMEQT8H6RS85zFPVY",
           chatIds: ['1884806'],
-          level: 'info',
-          timestamp: false,
-          enabled: false,
-          overwriteRules: [
-            {
-              eventName: 'BlockchainDownloadProgressTracker',
-              enabled: false,
-            },
-          ],
+          level: 'notice',
+          disabled: true,
         },
         {
           type: 'console',
           timestamp: 'MMM DD, HH:MM:ss.SSS',
-          enabled: true,
+          level: 'debug',
+          overwriteRules: [
+            {
+              eventName: 'BlockchainDownloadProgressTracker',
+              activation: 'active',
+            },
+            {
+              eventName: 'End of sync detected',
+              activation: 'active',
+            },
+          ],
         },
         {
           type: 'file',
           filename: './logs/app.log',
           timestamp: true,
-          enabled: false,
+          disabled: true,
         },
       ],
       debug: {
-        atStartBuildEventCacheOnly: false,
-        overlappingGoBackNPositions: 20000,
+        atStartBuildEventCacheOnly: true,
       },
       overwriteRules: [
       ]
