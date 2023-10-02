@@ -472,6 +472,13 @@ class LogProcessor extends EventEmitter {
 
     this.#emitSystemMessage({ level: levels.info, message: `logProcessor: Starting...` })
 
+    if (!fs.existsSync(this.#filePath)) {
+      this.#emitSystemMessage({ level: levels.alert, message: `File watcher error: no such file ${this.#filePath}`})
+      this.#emitSystemMessage({ level: levels.alert, message: `Not watching file ${this.#filePath}! Check the configuration and try again.`})
+      this.stopWatching()
+      return
+    }
+
     this.#emitSystemMessage({ level: levels.debug, message: `logProcessor: Building cache...` })
     this.#getEnabledRules()
     this.#buildFormatCache()
