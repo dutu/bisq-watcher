@@ -1,5 +1,5 @@
 import validateConfiguration from './validateConfiguration.mjs'
-import { startWatchers, stopWatchers } from './startWatchers.mjs'
+import { startWatcher, stopWatchers } from './startWatcher.mjs'
 
 console.log(`bisq-watcher application has started!`)
 
@@ -9,7 +9,7 @@ if ( returnCode !== 0) {
   process.exit(returnCode)
 }
 
-startWatchers()
+startWatcher()
 
 // Function to handle graceful shutdown
 const gracefulShutdown = async (signal) => {

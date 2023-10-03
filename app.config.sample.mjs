@@ -1,12 +1,5 @@
 /**
- * Application Configuration File
- *
- * @typedef {Object} MainConfig
- * @property {WatcherConfig[]} watchers - Array of watcher configurations.
- */
-
-/**
- * Watcher Configuration
+ * bisq-watcher Application Configuration File
  *
  * @typedef {Object} WatcherConfig
  * @property {string} [name] - The name of the watcher. If present all messages will be prefixed with this name.
@@ -55,45 +48,41 @@
  */
 
 export default {
-  watchers: [
+  name: 'main',
+  logFile: '%USERPROFILE%\\AppData\\Roaming\\Bisq\\bisq.log',
+  transports: [
     {
-      name: 'main',
-      logFile: '%USERPROFILE%\\AppData\\Roaming\\Bisq\\bisq.log',
-      transports: [
+      type: 'telegram',
+      apiToken: "624126:AAEfjLOoYRQ4kvEMEQT8H6RS85zFPVY",
+      chatIds: ['1884806'],
+      level: 'notice',
+      disabled: true,
+    },
+    {
+      type: 'console',
+      timestamp: 'MMM DD, HH:MM:ss.SSS',
+      level: 'debug',
+      overwriteRules: [
         {
-          type: 'telegram',
-          apiToken: "624126:AAEfjLOoYRQ4kvEMEQT8H6RS85zFPVY",
-          chatIds: ['1884806'],
-          level: 'notice',
-          disabled: true,
+          eventName: 'BlockchainDownloadProgressTracker',
+          activation: 'active',
         },
         {
-          type: 'console',
-          timestamp: 'MMM DD, HH:MM:ss.SSS',
-          level: 'debug',
-          overwriteRules: [
-            {
-              eventName: 'BlockchainDownloadProgressTracker',
-              activation: 'active',
-            },
-            {
-              eventName: 'End of sync detected',
-              activation: 'active',
-            },
-          ],
-        },
-        {
-          type: 'file',
-          filename: './logs/app.log',
-          timestamp: true,
-          disabled: true,
+          eventName: 'End of sync detected',
+          activation: 'active',
         },
       ],
-      debug: {
-        atStartBuildEventCacheOnly: true,
-      },
-      overwriteRules: [
-      ]
-    }
+    },
+    {
+      type: 'file',
+      filename: './logs/app.log',
+      timestamp: true,
+      disabled: true,
+    },
+  ],
+  debug: {
+    atStartBuildEventCacheOnly: true,
+  },
+  overwriteRules: [
   ]
 }

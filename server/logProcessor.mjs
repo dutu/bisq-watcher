@@ -520,7 +520,7 @@ class LogProcessor extends EventEmitter {
    * logProcessor.startWatching()
    * logProcessor.stopWatching()
    */
-  stopWatching() {
+  async stopWatching() {
     if (this.#watcher) {
       this.#emitSystemMessage({ level: levels.notice, message: `logProcessor: Stopping...` })
       this.#watcher.close()
