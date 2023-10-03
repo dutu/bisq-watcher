@@ -2,7 +2,7 @@
  * Provides the functions to start and stop the watchers.
  */
 
-import appConfig from '../app.config.mjs'
+
 import Logger from './logger.mjs'
 import { levels } from './syslog.mjs'
 import LogProcessor from './logProcessor.mjs'
@@ -10,7 +10,7 @@ import LogProcessor from './logProcessor.mjs'
 let logProcessor
 const loggerInstances = []
 
-export const startWatcher = function startWatcher(config = appConfig) {
+export const startWatcher = function startWatcher(config) {
   // Initialize a Logger instance based on the logger config
   const loggerInstance = new Logger(config)
   loggerInstances.push(loggerInstance)

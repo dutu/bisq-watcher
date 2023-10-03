@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "bisq-watcher",
   "main": "server/app.mjs",
+  "type": "module",
   "engines": {
     "node": "20.x"
   },

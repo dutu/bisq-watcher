@@ -1,9 +1,10 @@
-// to start application with pm2 run `pm2 start ecosystem.config.js`
+const appName = process.env.APP_NAME || 'bisq-watcher'
+
 module.exports = {
   apps: [{
-    name: "bisq-watcher",
+    name: appName,
     script: 'yarn',
-    args: 'start',
-    interpreter: 'none',
+    args: `start --config ${appName}.config.mjs`,
+    interpreter: 'none'
   }]
 }

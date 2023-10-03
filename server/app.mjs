@@ -1,15 +1,23 @@
-import validateConfiguration from './validateConfiguration.mjs'
+import { validateConfiguration, AppConfigError } from './validateConfiguration.mjs'
 import { startWatcher, stopWatchers } from './startWatcher.mjs'
+
+let appConfig
 
 console.log(`bisq-watcher application has started!`)
 
-const returnCode = validateConfiguration()
-if ( returnCode !== 0) {
-  console.error('Invalid configuration, exiting...')
-  process.exit(returnCode)
+// Try to validate the application's configuration and rules.
+// If an error occurs, it will be caught and handled appropriately.
+try {
+  appConfig = await validateConfiguration()
+} catch (error) {
+  if (error instanceof AppConfigError) {
+    console.error(`${error.message}`)
+    console.error('Invalid configuration. Exiting...')
+    process.exit(error.exitCode)
+  }
 }
 
-startWatcher()
+startWatcher(appConfig)
 
 // Function to handle graceful shutdown
 const gracefulShutdown = async (signal) => {
