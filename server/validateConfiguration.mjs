@@ -171,6 +171,10 @@ const validateRules = function() {
  */
 export const validateConfiguration = async function() {
   const configFilePath = findConfigFilePath()
+  if (!configFilePath) {
+    throw new AppConfigError(`No configuration file. Please specify a configuration file with command line option --config`, 2)
+  }
+
   try {
     const appConfig = await validateAppConfig(configFilePath)
     validateRules()
