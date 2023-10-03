@@ -82,7 +82,12 @@ export const formatTimestamp = function formatTimestamp (timestampConfig, timest
   return ''
 }
 
-
+/**
+ * Capitalizes the first letter of a given string.
+ *
+ * @param {string} word - The string to capitalize.
+ * @returns {string} The input string with the first letter capitalized.
+ */
 export const capitalize = function capitalize(word) {
   if (typeof word !== 'string' || word.length === 0) return ''
   return word.charAt(0).toUpperCase() + word.slice(1)
