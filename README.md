@@ -40,26 +40,18 @@ Table of Contents
 
 Before you proceed, ensure you have installed the following software:
  * Node.js
- * Yarn Package Manager
  * PM2 Process Manager
 
 ### Node.js
 
 * Download and install Node.js from the [official website](https://nodejs.org/en).
 
-### Corepack / Yarn
-
-* Enable corepack (the preferred way to manage Yarn):
-```shell
-corepack enable
-```
-
 ### PM2
 
-* Install PM2:
+* Install PM2 globally:
 
 ```shell
-yarn global add pm2
+npm install -g pm2
 ```
 
 ### Git Installation and Repository Cloning
@@ -78,9 +70,9 @@ git checkout v0.1.0
 
 ## App Configuration
 
-* Rename Configuration Sample File: make a copy of the `app.config.sample.mjs` file and rename it to `app.config.mjs`.
+* Rename Configuration Sample File: make a copy of the `bisq-watcher.config.sample.mjs` file and rename it to `bisq-watcher.config.mjs`.
 
-* Edit the `app.config.mjs` file to specify the Bisq logfile location and tailor the watcher to your specific requirements.
+* Edit the `bisq-watcher.config.mjs` file to specify the Bisq logfile location and tailor the watcher to your specific requirements.
   > This configuration file includes settings for console logging, file logging, and a Telegram bot.
 
 
@@ -123,9 +115,9 @@ For Telegram-based log notifications, you'll have to create a Telegram bot and o
 * Look for the `chat` object in the returned JSON, your chat ID will be the value of `id` within that object.
 
 
-### Update `app.config.mjs`
+### Update `bisq-watcher.config.mjs`
 
-* Add or update the Telegram bot configuration in app.config.mjs:
+* Add or update the Telegram bot configuration in `bisq-watcher.config.mjs`:
 ```js
 {
   ...,
@@ -152,14 +144,21 @@ Replace `YOUR_API_TOKEN` and `YOUR_CHAT_ID` with the actual values you obtained 
 * Use PM2 to start the application:
 
 ```shell
-pm2 start ecosystem.config.js
+pm2 start bisq-watcher
 ```
+
+> Until you are sure your configuration file `bisq-watcher.config.mjs` has been setup properly you can start the application with:
+> ```shell
+> pm2 start bisq-watcher --no-deamon
+> ```
+> 
+
 
 ## View Output and Console
 
 * To view the logs:
 ```shell
-pm2 logs
+pm2 logs bisq-watcher
 ```
 
 * To check output files, navigate to the output directory:

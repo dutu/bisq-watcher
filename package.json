@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "description": "bisq-watcher",
   "main": "server/app.mjs",
-  "type": "module",
   "engines": {
     "node": "20.x"
   },
@@ -19,13 +18,11 @@
     "monitoring-tool"
   ],
   "scripts": {
-    "start": "node --experimental-modules server/app.mjs"
+    "start": "node server/app.mjs"
   },
-  "packageManager": "yarn@3.6.3",
   "dependencies": {
     "ajv": "^8.12.0",
     "chokidar": "^3.5.3",
-    "crypto": "^1.0.1",
     "dayjs": "^1.11.10",
     "debug": "^4.3.4",
     "eventemitter3": "^5.0.1",
