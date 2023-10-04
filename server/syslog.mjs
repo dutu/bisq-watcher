@@ -27,16 +27,10 @@ export const levels = {
 export const icons = {
   crit: '💥',
   alert: '🚨',
-  error: '🔺',
+  error: '❗️',
   warning: '⚠️',
-  notice: '🔹',
+  notice: '🔷',
   info: '💡',
-//  info: '▫️',
-/*
-  warning: '🔸',
-  error: '❌',
-  error: '🚫',
-*/
   debug: '🔍',
 }
 
