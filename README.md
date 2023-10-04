@@ -1,95 +1,87 @@
 # Overview
 
-**Bisq-watcher** is a highly customizable monitoring tool for the Bisq decentralized exchange.
-Developed with Node.js, it's compatible across Windows, Linux, and macOS platforms.
-It allows you to set up one or multiple watchers, each capable of monitoring a specific Bisq instance running on your computer. 
+**Bisq-watcher** is a customizable monitoring tool for the Bisq decentralized exchange, built with Node.js and compatible with Windows, Linux, and macOS. It allows you to set up a watcher to monitor your Bisq application on your computer.
 
-Each watcher is comprised of three core components:
+Each watcher consists of three core components:
 
-* **File Watcher**: Monitors the `bisq.log` file.
-* **Log Processor**: Parses and extracts relevant log data based on predefined rules.
-* **Logger**: Sends notifications via multiple transports — currently supporting **console**, **file**, and **Telegram**.
-
-Whether you're interested in real-time trade updates on Telegram or just keeping an eye on the logs, bisq-watcher has you covered.
+*  **File Watcher**: Monitors the `bisq.log` file.
+*  **Log Processor**: Parses and extracts relevant log data based on predefined rules.
+*  **Logger**: Sends notifications via multiple transports, including **console**, **file**, and **Telegram**.
 
 
-Table of Contents
----
+Whether you need real-time trade updates on Telegram or just want to keep an eye on the logs, bisq-watcher has you covered.
 
-- [Overview](#overview)
+
+# Table of Contents
+
 - [Installation](#installation)
     - [Prerequisites](#prerequisites)
-        - [Node.js](#nodejs)
-        - [Yarn](#yarn)
-        - [PM2](#pm2)
-        - [Git Installation and Repository Cloning](#git-installation-and-repository-cloning)
+    - [Node.js](#nodejs)
+    - [Repository Cloning](#repository-cloning)
 - [Configuration](#configuration)
     - [App Configuration](#app-configuration)
     - [Telegram Integration](#telegram-integration)
         - [Getting API Token](#getting-api-token)
         - [Getting Chat ID](#getting-chat-id)
 - [Usage](#usage)
-    - [Start the Application](#start-the-application)
-    - [View Output and Console](#view-output-and-console)
-    - [Stop the Application](#stop-the-application)
+    - [Starting the Application](#starting-the-application)
+    - [Notification Testing](#notification-testing)
+    - [Advanced Use with PM2](#advanced-use-with-pm2)
+    - [Setting Up Multiple Watchers](#setting-up-multiple-watchers)
+- [Contributions](#contributions)
 - [Versioning and Changelog](#versioning-and-changelog)
+
 
 # Installation
 
 ## Prerequisites
 
-Before you proceed, ensure you have installed the following software:
- * Node.js
- * PM2 Process Manager
+Ensure that Bisq-watcher runs on the same computer as your Bisq application.
+You'll need [Node.js](https://nodejs.org/en) installed.
 
-### Node.js
+
+## Node.js
 
 * Download and install Node.js from the [official website](https://nodejs.org/en).
 
-### PM2
 
-* Install PM2 globally:
+## Repository Cloning
 
-```shell
-npm install -g pm2
-```
+* Before cloning the repository, make sure Git is installed on your system. If not, download and install it from the [official Git website](https://git-scm.com/).
 
-### Git Installation and Repository Cloning
-
-* Before cloning the repository, make sure Git is installed on your system. If it's not, you can download and install it from the [official Git website](https://git-scm.com/).
-
-* After installing Git, open a terminal and run the following command to clone the repository and select the latest release:
+* Clone bisq-watcher repository:
 
 ```shell
 git clone https://github.com/dutu/bisq-watcher
 cd bisq-watcher
+```
+
+* Checkout the latest release:
+```shell
 git checkout v0.1.0
+```
+
+* Install dependencies:
+```shell
+npm install
 ```
 
 # Configuration
 
 ## App Configuration
 
-* Rename Configuration Sample File: make a copy of the `bisq-watcher.config.sample.mjs` file and rename it to `bisq-watcher.config.mjs`.
+* Make a copy of the `bisq-watcher.config.sample.mjs` file and rename it to `bisq-watcher.config.mjs`.
 
-* Edit the `bisq-watcher.config.mjs` file to specify the Bisq logfile location and tailor the watcher to your specific requirements.
-  > This configuration file includes settings for console logging, file logging, and a Telegram bot.
+* Edit `bisq-watcher.config.mjs` to customize your watcher settings, including console logging, file logging, and Telegram integration.
+  
+    > In particular, make sure: `logFile` specifies the correct location of the main Bisq log file `bisq.log`. See [Bisq data directory](https://bisq.wiki/Data_directory).
 
-
-### Quick Configuration Guide
-
-Here are some common fields you might need to update:
-
-- `logFile`: The location of the Bisq log file.
-- `transports`: Array of logging transports. Available types are 'telegram', 'console', and 'file'.
-
-For advanced configurations and all available options, please refer to the JSDoc comments within `app.config.sample.mjs`.
+For advanced configurations and all available options, refer to the JSDoc comments within `[app.config.sample.mjs](app.config.sample.mjs)` file.
 
 
 ## Telegram Integration
 
-For Telegram-based log notifications, you'll have to create a Telegram bot and obtain its API token and a chat ID.
-
+To enable Telegram-based log notifications:
 
 ### Getting API Token
 
@@ -99,7 +91,7 @@ For Telegram-based log notifications, you'll have to create a Telegram bot and o
 
 * Follow BotFather's prompts to name your bot.
 
-* After the bot is created, you'll receive an API token. Make a note of this token as you'll need it for the `app.config.mjs` file.
+* After creating the bot, you'll receive an API token. Note this token for use in `bisq-watcher.config.mjs`.
 
 
 ### Getting Chat ID
@@ -117,7 +109,8 @@ For Telegram-based log notifications, you'll have to create a Telegram bot and o
 
 ### Update `bisq-watcher.config.mjs`
 
-* Add or update the Telegram bot configuration in `bisq-watcher.config.mjs`:
+* Update `bisq-watcher.config.mjs` with the Telegram bot configuration:
+
 ```js
 {
   ...,
@@ -139,7 +132,35 @@ Replace `YOUR_API_TOKEN` and `YOUR_CHAT_ID` with the actual values you obtained 
 
 # Usage
 
-## Start the Application
+## Starting the Application
+
+* To run the bisq-watcher, use:
+
+```shell
+* npm start bisq-watcher
+```
+
+### Notification Testing
+
+By default, bisq-watcher monitors new events added to the main Bisq logfile, `bisq.log`. However, for testing purposes, you can enable a debug flag called `atStartProcessEntireLogFile`.
+
+Setting `atStartProcessEntireLogFile` to `true` in the configuration file `bisq-watcher.config.mjs` will instruct bisq-watcher to process the entire `bisq.log` file. Notifications will be sent as the logfile is read and parsed.
+
+This feature is useful for testing and validating notifications without waiting for new events to occur in real-time.
+
+
+## Advanced Use with PM2
+
+### Running the application using PM2
+
+PM2 is a daemon process manager that helps keep your application running 24/7. PM2 can be used and configured to restart your application after unexpected machine restarts. Bisq-watcher is designed to work seamlessly with PM2.
+
+* Install PM2 globally:
+
+```shell
+npm install -g pm2
+```
+
 
 * Use PM2 to start the application:
 
@@ -147,32 +168,49 @@ Replace `YOUR_API_TOKEN` and `YOUR_CHAT_ID` with the actual values you obtained 
 pm2 start bisq-watcher
 ```
 
-> Until you are sure your configuration file `bisq-watcher.config.mjs` has been setup properly you can start the application with:
-> ```shell
-> pm2 start bisq-watcher --no-deamon
-> ```
-> 
 
-
-## View Output and Console
-
-* To view the logs:
+* View console output:
 ```shell
 pm2 logs bisq-watcher
 ```
 
-* To check output files, navigate to the output directory:
-```
-cd [output_directory]
-```
-
-
-## Stop the Application
-
-* To stop the application, use:
+* To stop the application:
 ```shell
 pm2 stop bisq-watcher
 ```
+
+### Setting Up Multiple Watchers
+
+If you need to monitor two Bisq instances on the same computer, follow these steps:
+
+* Create a second copy of `bisq-watcher.config.sample.mjs` and give it a different name, e.g. `bisq-watcher2.config.mjs`
+
+
+* Edit `bisq-watcher2.config.mjs` to configure the second watcher.
+
+  
+* Start the second watcher:
+
+```shell
+CONFIG_NAME=bisq-watcher2 npm start
+```
+
+ 
+* To start the second watcher with PM2:
+
+```shell
+pm2 start bisq-watcher2
+```
+
+# Contributions
+
+Bisq-watcher is an actively developed, and contributions are welcome.
+
+While the application is still in its early stages, it currently includes rules for trading and dispute notifications.
+We are continuously working on expanding the set of rules to enhance the monitoring capabilities.
+
+If you would like to contribute by adding more rules to enable additional notifications, please consider opening an issue or submitting a pull request. You can find the rule definitions in the [server/rules](server/rules) folder.
+
 
 # Versioning and Changelog
 
