@@ -1,10 +1,10 @@
 # Overview
 
-**Bisq-watcher** is a customizable monitoring tool for the Bisq decentralized exchange, built with Node.js and compatible with Windows, Linux, and macOS. It allows you to set up a watcher to monitor your Bisq application on your computer.
+**Bisq-watcher** is a customizable monitoring tool for the Bisq application, built with Node.js and compatible with Windows, Linux, and macOS. It allows you to set up a watcher to monitor your Bisq application on your computer.
 
-Each watcher consists of three core components:
+Bisq-watcher consists of three core components:
 
-*  **File Watcher**: Monitors the `bisq.log` file.
+*  **File Watcher**: Monitors the main bisq log file `bisq.log`.
 *  **Log Processor**: Parses and extracts relevant log data based on predefined rules.
 *  **Logger**: Sends notifications via multiple transports, including **console**, **file**, and **Telegram**.
 
@@ -137,7 +137,7 @@ Replace `YOUR_API_TOKEN` and `YOUR_CHAT_ID` with the actual values you obtained 
 * To run the bisq-watcher, use:
 
 ```shell
-* npm start bisq-watcher
+npm start bisq-watcher
 ```
 
 ### Notification Testing

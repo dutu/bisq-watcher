@@ -1,4 +1,4 @@
-/app.config.mjs
+/bisq-watcher.config.mjs
 /logs/
 
 # npm debug log
