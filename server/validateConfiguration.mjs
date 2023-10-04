@@ -45,10 +45,15 @@ export class AppConfigError extends Error {
 }
 
 /**
- * Parses command-line arguments to find the path of a configuration file.
+ * Finds the path of a configuration file based on the CONFIG_NAME environment variable.
+ * If CONFIG_NAME is not set, it will check for the --config command-line argument.
  *
  * @example
- * // Run the script with: node script.js --name example --config path/to/config
+ * // Set the CONFIG_NAME environment variable:
+ * process.env.CONFIG_NAME = 'bisq-watcher2'
+ * findConfigFilePath() // Returns 'bisq-watcher2.config.mjs'
+ *
+ * // Run the script with: node script.js --config path/to/config
  * findConfigFilePath() // Returns 'path/to/config'
  *
  * // Run the script with: node script.js --name example
@@ -56,7 +61,12 @@ export class AppConfigError extends Error {
  *
  * @returns {string|undefined} The path to the config file or undefined if not specified.
  */
-const findConfigFilePath = function findConfigFilePath()  {
+const findConfigFilePath = function findConfigFilePath() {
+  // Check if CONFIG_NAME environment variable is set
+  if (process.env.CONFIG_NAME) {
+    return `${process.env.CONFIG_NAME}.config.mjs`
+  }
+
   const args = process.argv.slice(2)
   let configFilePath
 
