@@ -36,7 +36,7 @@ const levelMap = {
 class LogProcessor extends EventEmitter {
   #config
   #filePath
-  #atStartBuildEventCacheOnly
+  #atStartProcessEntireLogFile
   #lastPositionProcessed = 0
   #buffer = ''
   #watcher
@@ -57,14 +57,14 @@ class LogProcessor extends EventEmitter {
    * @param {Object} config - Configuration object
    * @param {string} config.logFile - Path to the log file to be processed
    * @param {Object} [config.debug] - Debugging settings
-   * @param {boolean} [config.debug.atStartBuildEventCacheOnly=true] - Whether to build the event cache only at start
+   * @param {boolean} [config.debug.atStartProcessEntireLogFile=false] - Whether to build the event cache only at start
    * @param {number} [config.debug.overlappingGoBackNPositions=20000] - Number of positions to go back to ensure buffer overlapping
    */
   constructor(config) {
     super()
     this.#config = config
     this.#filePath = resolveEnvVariablesInPath(config.logFile)
-    this.#atStartBuildEventCacheOnly= config.debug?.atStartBuildEventCacheOnly ?? true
+    this.#atStartProcessEntireLogFile= config.debug?.atStartProcessEntireLogFile ?? false
     this.#overlappingGoBackNPositions = config.debug?.overlappingGoBackNPositions ?? 20000
   }
 
@@ -241,7 +241,7 @@ class LogProcessor extends EventEmitter {
       const progress = (this.#progressLogging.bytesRead / this.#progressLogging.fileSize) * 100
 
       if (Math.floor(progress / 10) > this.#progressLogging.lastLoggedProgress) {
-        this.#emitSystemMessage({ level: levels.debug, message: `logProcessor: Reading the logfile at start... ${Math.floor(progress)}%` })
+        this.#emitSystemMessage({ level: levels.debug, message: `logProcessor: ${this.#atStartProcessEntireLogFile ? 'Processing' : 'Reading'} the logfile at start... ${Math.floor(progress)}%` })
         this.#progressLogging.lastLoggedProgress = Math.floor(progress / 10)
       }
     }
@@ -308,12 +308,12 @@ class LogProcessor extends EventEmitter {
    * Reads new lines from the log file and processes them.
    *
    * @param {Object} [options] - Optional parameters
-   * @param {boolean} [options.buildCacheOnly=false] - Whether to only build the event cache without emitting events
+   * @param {boolean} [options.atStartProcessEntireLogFile=false] - Whether to only build the event cache without emitting events
    *
    * @example
-   * await readNewLines({ buildCacheOnly: true })
+   * await readNewLines({ atStartProcessEntireLogFile: true })
    */
-  #processBufferedLogEvent({ buildCacheOnly }) {
+  #processBufferedLogEvent({ atStartProcessEntireLogFile }) {
     if (this.#eventCache.has(this.#buffer)) {
       dbg_fw(`Skipping cached event: ${this.#buffer}`)
       return
@@ -322,7 +322,7 @@ class LogProcessor extends EventEmitter {
     dbg_fw(`Processing buffered event: ${this.#buffer}`)
     const metadata = this.#extractLogEventMetadata(this.#buffer)
     if (metadata.timestamp) {
-      if (!buildCacheOnly) {
+      if (atStartProcessEntireLogFile) {
         this.#ruleMap.forEach((rule) => {
           this.#processLogEventWithRule(this.#buffer, rule, metadata)
         })
@@ -359,7 +359,7 @@ class LogProcessor extends EventEmitter {
   /**
    * Reads new lines from the log file and processes them.
    */
-  async #readNewLines({ buildCacheOnly = false, logProgress = false } = {}) {
+  async #readNewLines({ atStartProcessEntireLogFile = false, logProgress = false } = {}) {
     this.#isReading = true
     this.#shouldReadAgain = false
 
@@ -397,7 +397,7 @@ class LogProcessor extends EventEmitter {
       rl.on('close', () => {
         // Process remaining buffer when readline interface is closed
         if (this.#buffer) {
-          this.#processBufferedLogEvent( { buildCacheOnly })
+          this.#processBufferedLogEvent( { atStartProcessEntireLogFile })
         }
       })
 
@@ -418,7 +418,7 @@ class LogProcessor extends EventEmitter {
               break
             }
 
-            this.#processBufferedLogEvent({ buildCacheOnly })
+            this.#processBufferedLogEvent({ atStartProcessEntireLogFile })
           }
 
           this.#buffer = line // Store the new line in the buffer
@@ -454,7 +454,7 @@ class LogProcessor extends EventEmitter {
         await this.#readNewLines()
       }
 
-      if (logProgress) this.#emitSystemMessage({ level: levels.debug, message: `logProcessor: Reading the logfile at start... 100%` })
+      if (logProgress) this.#emitSystemMessage({ level: levels.debug, message: `logProcessor: ${this.#atStartProcessEntireLogFile ? 'Processing' : 'Reading'} the logfile at start... 100%` })
     }
   }
 
@@ -485,7 +485,7 @@ class LogProcessor extends EventEmitter {
 
     dbg_fw('Reading the logfile at start...')
     this.#emitSystemMessage({ level: levels.debug, message: `logProcessor: Reading the logfile at start...` })
-    await this.#readNewLines({ buildCacheOnly: this.#atStartBuildEventCacheOnly, logProgress: true })
+    await this.#readNewLines({ atStartProcessEntireLogFile: this.#atStartProcessEntireLogFile, logProgress: true })
 
     try {
       this.#watcher = chokidar.watch(this.#filePath)

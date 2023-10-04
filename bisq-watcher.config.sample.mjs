@@ -28,7 +28,7 @@
  * @typedef {Object} OverwriteRuleConfig
  * @property {string} eventName - The name of the rule to overwrite.
  * @property {string} [message] - A template string for formatting the message to emit.
- * @property {'crit'|'alert'|'error'|'warning'|'info'|'debug'} [level='info'] - Overwrites the severity level of the original log event from Bisq log.
+ * @property {'crit'|'alert'|'error'|'warning'|'info'|'notice'|'debug'} [level='info'] - Overwrites the severity level of the original log event from Bisq log.
  * @property {boolean} [sendToTelegram=true] - Flag indicating whether to send the message to Telegram.
  * @property {'active'|'inactive'} [activation] - Forces a rule do become active or not for respective watcher or transport
  *
@@ -42,8 +42,8 @@
  * Debug Configuration for watcher
  *
  * @typedef {Object} DebugConfig
- * @property {boolean} [atStartBuildEventCacheOnly=flase] - Flag indicating whether existing logfile should be read and log event to be sent to loggers.
- * @property {number} [overlappingGoBackNPositions=20000] - Size in bytes for buffer overlapping when reading Bisq logfile.
+ * @property {boolean} [atStartProcessEntireLogFile=true] - Flag indicating whether existing logfile should be read and process at application start.
+ * @property {number} [overlappingGoBackNPositions] - Size in bytes for buffer overlapping when reading Bisq logfile.
  * @property {boolean} [useHash=true] - Flag indicating whether cached log events should be stored in clear text or hashed.
  */
 
@@ -53,8 +53,8 @@ export default {
   transports: [
     {
       type: 'telegram',
-      apiToken: "624126:AAEfjLOoYRQ4kvEMEQT8H6RS85zFPVY",
-      chatIds: ['1884806'],
+      apiToken: "1234567890:AABBCCDDEEFFGGHHIIJJKKLLMM-F073gUZU",
+      chatIds: ['135792468'],
       level: 'notice',
       disabled: true,
     },
@@ -77,11 +77,12 @@ export default {
       type: 'file',
       filename: './logs/app.log',
       timestamp: true,
+      level: 'notice',
       disabled: true,
     },
   ],
   debug: {
-    atStartBuildEventCacheOnly: true,
+    atStartProcessEntireLogFile: false,
   },
   overwriteRules: [
   ]

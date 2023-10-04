@@ -1,12 +1,5 @@
 /**
- * Application Configuration File
- *
- * @typedef {Object} MainConfig
- * @property {WatcherConfig[]} watchers - Array of watcher configurations.
- */
-
-/**
- * Watcher Configuration
+ * bisq-watcher Application Configuration File
  *
  * @typedef {Object} WatcherConfig
  * @property {string} [name] - The name of the watcher. If present all messages will be prefixed with this name.
@@ -49,7 +42,7 @@
  * Debug Configuration for watcher
  *
  * @typedef {Object} DebugConfig
- * @property {boolean} [atStartBuildEventCacheOnly=flase] - Flag indicating whether existing logfile should be read and log event to be sent to loggers.
+ * @property {boolean} [atStartProcessEntireLogFile=true] - Flag indicating whether existing logfile should be read and process at application start.
  * @property {number} [overlappingGoBackNPositions] - Size in bytes for buffer overlapping when reading Bisq logfile.
  * @property {boolean} [useHash=true] - Flag indicating whether cached log events should be stored in clear text or hashed.
  */
@@ -89,7 +82,7 @@ export default {
     },
   ],
   debug: {
-    atStartBuildEventCacheOnly: false,
+    atStartProcessEntireLogFile: true,
   },
   overwriteRules: []
 }
