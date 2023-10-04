@@ -67,7 +67,7 @@ export const tradingRules =  [
     eventName: 'SellerAsTakerTrade_SELLER_CONFIRMED_IN_UI_FIAT_PAYMENT_RECEIPT',
     logger: 'b.c.t.m.b.Trade',
     pattern: 'Set new state at SellerAsTakerTrade (id={0}): SELLER_CONFIRMED_IN_UI_FIAT_PAYMENT_RECEIPT',
-    message: '({0}) You confirmed that you have received the payment.',
+    message: '({0}) You confirmed payment receipt.',
     level: 'notice',
     sendToTelegram: true,
   },
