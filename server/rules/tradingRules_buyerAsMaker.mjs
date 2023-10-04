@@ -26,6 +26,7 @@ export const tradingRules = [
     logger: 'b.c.t.m.b.Trade',
     pattern: 'Set new state at BuyerAsMakerTrade (id={0}): BUYER_RECEIVED_DEPOSIT_TX_PUBLISHED_MSG',
     message: '({0}) Deposit transaction has been published. Wait for blockchain confirmation!',
+    level: 'notice',
     sendToTelegram: true,
   },
   {
@@ -33,6 +34,7 @@ export const tradingRules = [
     logger: 'b.c.t.m.b.Trade',
     pattern: 'Set new state at BuyerAsMakerTrade (id={0}): BUYER_SAW_DEPOSIT_TX_IN_NETWORK',
     message: '({0}) Deposit transaction has been published. Wait for blockchain confirmation!',
+    level: 'notice',
     sendToTelegram: true,
   },
 
@@ -44,6 +46,7 @@ export const tradingRules = [
     logger: 'b.c.t.m.b.Trade',
     pattern: 'Set new state at BuyerAsMakerTrade (id={0}): DEPOSIT_CONFIRMED_IN_BLOCK_CHAIN',
     message: '({0}) Deposit transaction is confirmed. Open your Bisq application and start the payment!',
+    level: 'notice',
     sendToTelegram: true,
   },
 
@@ -55,6 +58,7 @@ export const tradingRules = [
     logger: 'b.c.t.m.b.Trade',
     pattern: 'Set new state at BuyerAsMakerTrade (id={0}): BUYER_STORED_IN_MAILBOX_FIAT_PAYMENT_INITIATED_MSG',
     message: '({0}) You confirmed fiat payment has started. Wait until payment has arrived!',
+    level: 'notice',
     sendToTelegram: true,
   },
   {
@@ -62,6 +66,7 @@ export const tradingRules = [
     logger: 'b.c.t.m.b.Trade',
     pattern: ' Set new state at BuyerAsMakerTrade (id={0}): BUYER_SENT_FIAT_PAYMENT_INITIATED_MSG',
     message: '({0}) You confirmed fiat payment has started. Wait until payment has arrived!',
+    level: 'notice',
     sendToTelegram: true,
   },
 
@@ -73,6 +78,7 @@ export const tradingRules = [
     logger: 'b.c.t.m.b.Trade',
     pattern: 'Set new state at BuyerAsMakerTrade (id={0}): BUYER_RECEIVED_PAYOUT_TX_PUBLISHED_MSG',
     message: '({0}) The trade is completed.',
+    level: 'notice',
     sendToTelegram: true,
   },
   {
@@ -80,6 +86,7 @@ export const tradingRules = [
     logger: 'b.c.t.m.b.Trade',
     pattern: 'Set new state at BuyerAsMakerTrade (id={0}): BUYER_SAW_PAYOUT_TX_IN_NETWORK',
     message: '({0}) The trade is completed.',
+    level: 'notice',
     sendToTelegram: true,
   },
 ]
