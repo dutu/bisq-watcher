@@ -2,10 +2,10 @@
  * Provides the functions to start and stop the watchers.
  */
 
-
 import Logger from './logger.mjs'
 import { levels } from './syslog.mjs'
 import LogProcessor from './logProcessor.mjs'
+import { appVersion } from './app.mjs'
 
 let logProcessor
 const loggerInstances = []
@@ -19,7 +19,7 @@ export const startWatcher = function startWatcher(config) {
     eventName: `systemInfo`,
     logLevel: levels.info,
     timestamp: new Date(),
-    data: [levels.info, `bisq-watcher application has started!`]
+    data: [levels.info, `bisq-watcher v${appVersion} application has started!`]
   })
 
   // Initialize a LogProcessor instance

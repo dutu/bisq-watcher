@@ -1,9 +1,26 @@
-import path from 'path'
-import os from 'os'
+import fs from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
 import dayjs from 'dayjs'
 
 //import localizedFormat from 'dayjs/plugin/localizedFormat'
 //dayjs.extend(localizedFormat)
+
+/**
+ * Get the version number from package.json asynchronously.
+ *
+ * @function
+ * @returns {Promise<string>} A Promise that resolves with the version number.
+ */
+export const getVersionFromPackageJson = async function getVersionFromPackageJson() {
+  try {
+    const packageJson = await fs.promises.readFile('package.json', 'utf8')
+    const packageData = JSON.parse(packageJson)
+    return packageData.version
+  } catch (error) {
+    throw new Error('Error reading package.json or extracting version.');
+  }
+}
 
 /**
  * Resolves environment variables in a given file path.

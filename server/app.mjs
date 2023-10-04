@@ -1,10 +1,12 @@
 import { stopApp, gracefulShutdown } from './shutdown.mjs'
 import { validateConfiguration, AppConfigError } from './validateConfiguration.mjs'
 import { startWatcher } from './startWatcher.mjs'
+import { getVersionFromPackageJson } from './util.mjs'
 
 let appConfig
+export const appVersion = await getVersionFromPackageJson()
 
-console.log(`bisq-watcher application has started!`)
+console.log(`bisq-watcher v${appVersion} application has started!`)
 
 // Listen for TERM signal (e.g., kill)
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM').catch((err) => {
