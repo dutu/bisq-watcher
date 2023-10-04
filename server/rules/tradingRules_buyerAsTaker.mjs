@@ -60,6 +60,7 @@ export const tradingRules =  [
     message: '({0}) You confirmed fiat payment has started. Wait until payment has arrived!',
     level: 'notice',
     sendToTelegram: true,
+    isActive: false,
   },
   {
     eventName: 'BuyerAsMakerTrade_BUYER_SENT_FIAT_PAYMENT_INITIATED_MSG',

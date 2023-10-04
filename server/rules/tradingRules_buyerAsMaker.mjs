@@ -13,8 +13,9 @@ export const tradingRules = [
     logger: 'b.c.t.m.b.Trade',
     pattern: 'BuyerAsMakerTrade',
     message: '{*}',
-    sendToTelegram: true,
-    disabled: true,
+    level: 'debug',
+    sendToTelegram: false,
+    isActive: true,
   },
 */
 
@@ -60,11 +61,12 @@ export const tradingRules = [
     message: '({0}) You confirmed fiat payment has started. Wait until payment has arrived!',
     level: 'notice',
     sendToTelegram: true,
+    isActive: false,
   },
   {
     eventName: 'BuyerAsMakerTrade_BUYER_SENT_FIAT_PAYMENT_INITIATED_MSG',
     logger: 'b.c.t.m.b.Trade',
-    pattern: ' Set new state at BuyerAsMakerTrade (id={0}): BUYER_SENT_FIAT_PAYMENT_INITIATED_MSG',
+    pattern: 'Set new state at BuyerAsMakerTrade (id={0}): BUYER_SENT_FIAT_PAYMENT_INITIATED_MSG',
     message: '({0}) You confirmed fiat payment has started. Wait until payment has arrived!',
     level: 'notice',
     sendToTelegram: true,
