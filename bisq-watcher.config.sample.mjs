@@ -53,7 +53,7 @@ export default {
   transports: [
     {
       type: 'telegram',
-      apiToken: "1234567890:AABBCCDDEEFFGGHHIIJJKKLLMM-F073gUZU",
+      apiToken: "xxxxxxxxx:xxxxxxxxxxxxxxxxxxxxx-xxxxx",
       chatIds: ['135792468'],
       level: 'notice',
       disabled: true,
