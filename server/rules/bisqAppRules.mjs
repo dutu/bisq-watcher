@@ -24,7 +24,7 @@ export default [
     logger: 'b.c.a.BisqSetup',
     pattern: 'walletInitialized=true, p2pNetWorkReady=true',
     message: 'Wallet initialized and P2P network ready',
-    sendToTelegram: true
+    sendToTelegram: false
   },
   {
     eventName: 'MobileNotificationService: Send message',

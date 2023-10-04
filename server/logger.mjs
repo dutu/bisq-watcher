@@ -159,7 +159,7 @@ export default class Logger {
 
     // Remove inactive rules
     ruleMap.forEach((rule) => {
-      if (!rule.isActive)
+      if (!rule.isActive || transportConfig.type === 'telegram' && !rule.sendToTelegram)
       ruleMap.delete(rule.eventName)
     })
     return ruleMap
