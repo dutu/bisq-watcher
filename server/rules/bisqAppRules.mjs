@@ -50,13 +50,4 @@ export default [
     sendToTelegram: false,
     isActive: false,
   },
-  {
-    eventName: 'Received ChatMessage',
-    logger: 'b.c.s.t.TraderChatManager',
-    pattern: 'Received ChatMessage with tradeId {0}-',
-    message: '({0}) Received chat message',
-    level: 'notice',
-    sendToTelegram: true,
-    isActive: true,
-  },
 ]
