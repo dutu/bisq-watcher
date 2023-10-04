@@ -10,6 +10,11 @@ import { appVersion } from './app.mjs'
 let logProcessor
 const loggerInstances = []
 
+/**
+ * Starts the watcher based on the given configuration.
+ *
+ * @param {Object} config - Configuration object for the watcher and logger
+ */
 export const startWatcher = function startWatcher(config) {
   // Initialize a Logger instance based on the logger config
   const loggerInstance = new Logger(config)
@@ -34,7 +39,13 @@ export const startWatcher = function startWatcher(config) {
   logProcessor.startWatching()
 }
 
-export const stopWatchers = async  function stopWatchers(signal) {
+/**
+ * Stops the watcher.
+ *
+ * @param {string} signal - The signal received that initiated the shutdown
+ * @returns {Promise<void>} A promise that resolves when all watchers have been stopped
+ */
+export const stopWatcher = async  function stopWatcher(signal) {
   loggerInstances.forEach((loggerInstance) => loggerInstance.handleEventData({
     eventName: `systemNotice`,
     logLevel: levels.notice,

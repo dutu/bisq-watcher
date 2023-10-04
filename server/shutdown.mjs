@@ -1,5 +1,5 @@
 import { exec } from 'child_process'
-import { stopWatchers } from './startWatcher.mjs'
+import { stopWatcher } from './startWatcher.mjs'
 
 /**
  * Stops the PM2 application using the `pm2 stop` command.
@@ -50,7 +50,7 @@ const stopApp = async (exitCode = 0) => {
  */
 const gracefulShutdown = async (signal) => {
   console.log(`Received ${signal}, shutting down gracefully...`)
-  await stopWatchers(signal)
+  await stopWatcher(signal)
   await stopApp()
 }
 
