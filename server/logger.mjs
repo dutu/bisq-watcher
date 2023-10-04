@@ -249,7 +249,7 @@ export default class Logger {
 
     const loggerName = `${meta.loggerName}: ` || ''
     const icon = icons[level] + ' ' || ''
-    return `${timestamp}/*${loggerName}*/${icon}[${level}] ${message}`
+    return `${timestamp}${icon}[${level}] ${message}`
   }
 
   /**
