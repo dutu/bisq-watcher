@@ -22,7 +22,7 @@ export const startWatcher = function startWatcher(config) {
   loggerInstances.push(loggerInstance)
 
   loggerInstance.handleEventData(convertSystemMessageToEventData({
-    level: levels.warning,
+    level: levels.info,
     message: `bisq-watcher v${appVersion} application has started!`
   }))
 
