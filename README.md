@@ -21,12 +21,10 @@ Whether you need real-time trade updates on Telegram or just want to keep an eye
 - [Configuration](#configuration)
     - [App Configuration](#app-configuration)
     - [Telegram Integration](#telegram-integration)
-        - [Getting API Token](#getting-api-token)
-        - [Getting Chat ID](#getting-chat-id)
 - [Usage](#usage)
     - [Starting the Application](#starting-the-application)
     - [Notification Testing](#notification-testing)
-    - [Advanced Use with PM2](#advanced-use-with-pm2)
+    - [Running the application using PM2](#running-the-application-using-pm2)
     - [Setting Up Multiple Watchers](#setting-up-multiple-watchers)
 - [Contributions](#contributions)
 - [Versioning and Changelog](#versioning-and-changelog)
@@ -74,9 +72,9 @@ npm install
 
 * Edit `bisq-watcher.config.mjs` to customize your watcher settings, including console logging, file logging, and Telegram integration.
   
-    > In particular, make sure: `logFile` specifies the correct location of the main Bisq log file `bisq.log`. See [Bisq data directory](https://bisq.wiki/Data_directory).
+    > In particular, make sure: `logFile` specifies the correct location of the main Bisq log file `bisq.log`. See [Bisq data directory](https://bisq.wiki/Data_directory) default locations.
 
-For advanced configurations and all available options, refer to the JSDoc comments within `[app.config.sample.mjs](app.config.sample.mjs)` file.
+For advanced configurations and all available options, refer to the JSDoc comments within `[app.config.sample.mjs](./app.config.sample.mjs)` file.
 
 
 ## Telegram Integration
@@ -140,7 +138,7 @@ Replace `YOUR_API_TOKEN` and `YOUR_CHAT_ID` with the actual values you obtained 
 npm start bisq-watcher
 ```
 
-### Notification Testing
+## Notification Testing
 
 By default, bisq-watcher monitors new events added to the main Bisq logfile, `bisq.log`. However, for testing purposes, you can enable a debug flag called `atStartProcessEntireLogFile`.
 
@@ -149,9 +147,7 @@ Setting `atStartProcessEntireLogFile` to `true` in the configuration file `bisq-
 This feature is useful for testing and validating notifications without waiting for new events to occur in real-time.
 
 
-## Advanced Use with PM2
-
-### Running the application using PM2
+## Running the application using PM2
 
 PM2 is a daemon process manager that helps keep your application running 24/7. PM2 can be used and configured to restart your application after unexpected machine restarts. Bisq-watcher is designed to work seamlessly with PM2.
 
@@ -179,7 +175,7 @@ pm2 logs bisq-watcher
 pm2 stop bisq-watcher
 ```
 
-### Setting Up Multiple Watchers
+## Setting Up Multiple Watchers
 
 If you need to monitor two Bisq instances on the same computer, follow these steps:
 
@@ -209,7 +205,7 @@ Bisq-watcher is an actively developed, and contributions are welcome.
 While the application is still in its early stages, it currently includes rules for trading and dispute notifications.
 We are continuously working on expanding the set of rules to enhance the monitoring capabilities.
 
-If you would like to contribute by adding more rules to enable additional notifications, please consider opening an issue or submitting a pull request. You can find the rule definitions in the [server/rules](server/rules) folder.
+If you would like to contribute by adding more rules to enable additional notifications, please consider opening an issue or submitting a pull request. You can find the rule definitions in the [server/rules](./server/rules) folder.
 
 
 # Versioning and Changelog
