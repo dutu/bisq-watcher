@@ -6,6 +6,7 @@ import Logger from './logger.mjs'
 import { levels } from './syslog.mjs'
 import LogProcessor from './logProcessor.mjs'
 import { appVersion } from './app.mjs'
+import { convertSystemMessageToEventData } from './util.mjs'
 
 let logProcessor
 const loggerInstances = []
@@ -20,12 +21,10 @@ export const startWatcher = function startWatcher(config) {
   const loggerInstance = new Logger(config)
   loggerInstances.push(loggerInstance)
 
-  loggerInstance.handleEventData({
-    eventName: `systemInfo`,
-    logLevel: levels.info,
-    timestamp: new Date(),
-    data: [levels.info, `bisq-watcher v${appVersion} application has started!`]
-  })
+  loggerInstance.handleEventData(convertSystemMessageToEventData({
+    level: levels.warning,
+    message: `bisq-watcher v${appVersion} application has started!`
+  }))
 
   // Initialize a LogProcessor instance
   logProcessor = new LogProcessor(config)
@@ -46,12 +45,10 @@ export const startWatcher = function startWatcher(config) {
  * @returns {Promise<void>} A promise that resolves when all watchers have been stopped
  */
 export const stopWatcher = async  function stopWatcher(signal) {
-  loggerInstances.forEach((loggerInstance) => loggerInstance.handleEventData({
-    eventName: `systemNotice`,
-    logLevel: levels.notice,
-    timestamp: new Date(),
-    data: [levels.notice, `Received ${signal}, shutting down gracefully...`]
-  }))
+  loggerInstances.forEach((loggerInstance) => loggerInstance.handleEventData(convertSystemMessageToEventData({
+    level: levels.warning,
+    message: `Received ${signal}, shutting down gracefully...`,
+  })))
 
   await logProcessor.stopWatching()
 

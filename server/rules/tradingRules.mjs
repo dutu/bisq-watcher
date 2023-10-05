@@ -15,7 +15,7 @@ const tradingRules_common =  [
     eventName: 'myOfferTaken',
     logger: 'b.c.n.a.MyOfferTakenEvents',
     pattern: 'MyOfferTakenEvents: We got a offer removed. id={0}-',
-    message: `({0}) Your offer with ID {0} was taken.`,
+    message: `({0}) Your offer with ID {0} was taken`,
     level: 'notice',
     sendToTelegram: true,
     isActive: true,

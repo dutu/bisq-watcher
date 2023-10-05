@@ -34,7 +34,7 @@ const configSchema = {
           timestamp: {
             type: ['boolean', 'string']
           },
-          level: { enum: ['crit', 'alert', 'error', 'warning', 'info', 'notice', 'debug'] },
+          maxLevel: { enum: ['crit', 'alert', 'error', 'warning', 'notice', 'info', 'debug'] },
           disabled: { type: 'boolean' },
           overwriteRules: {
             type: 'array',

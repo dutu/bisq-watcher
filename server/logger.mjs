@@ -53,15 +53,18 @@ export default class Logger {
         return
       }
 
-      const ruleMap = this.#buildTransportRules(loggerConfig, transportConfig)
-      const filterMessage = winston.format((info) => this.#filterMessage(ruleMap, info))()
+      // default minlevel = 'notice'
+      const maxLevel = transportConfig.maxLevel ?? levels.info
+
+      const ruleMap = this.#buildTransportRules(loggerConfig, { maxLevel, ...transportConfig })
+
+      const filterMessage = winston.format((info) => this.#filterMessage(maxLevel, ruleMap, info))()
       const formatTimestamp = winston.format((info) => this.#formatTimestamp(transportConfig.timestamp, info))()
       const populateMessage = winston.format((info) => this.#populateMessage(ruleMap, info))()
 
       let transport
       if (transportConfig.type === 'console') {
         transport = new winston.transports.Console({
-          level: 'debug',
           format: winston.format.combine(
             filterMessage,
             formatTimestamp,
@@ -74,7 +77,6 @@ export default class Logger {
 
       if (transportConfig.type === 'file') {
         transport = new winston.transports.File({
-          level: 'debug',
           filename: transportConfig.filename,
           format: winston.format.combine(
             filterMessage,
@@ -111,8 +113,10 @@ export default class Logger {
       transports.push(transport)
     })
 
+    winston.addColors(colors)
     this.#logger = winston.createLogger({
       levels: winston.config.syslog.levels,
+      level: levels.debug,
       transports,
       exitOnError: false,
     })
@@ -159,7 +163,11 @@ export default class Logger {
 
     // Remove inactive rules
     ruleMap.forEach((rule) => {
-      if (!rule.isActive || transportConfig.type === 'telegram' && !rule.sendToTelegram)
+      if (
+        !rule.isActive
+        || transportConfig.type === 'telegram' && !rule.sendToTelegram
+        || rule.level && winston.config.syslog.levels[rule.level] > winston.config.syslog.levels[transportConfig.minLevel]
+      )
       ruleMap.delete(rule.eventName)
     })
     return ruleMap
@@ -168,13 +176,16 @@ export default class Logger {
   /**
    * Filters out messages without rule (isActive was false)
    *
+   * @param {'crit'|'alert'|'error'|'warning'|'info'|'notice'|'debug'} maxLevel - Maximum log level the logger transport will log.
    * @param {Map} ruleMap - The rule map
    * @param {Object} info - The log information object.
    * @return {Object|false} - Returns the log information object if rule exists, otherwise false
    */
-  #filterMessage(ruleMap, info) {
+  #filterMessage(maxLevel, ruleMap, info) {
     const { meta } = info
-    return ruleMap.has(meta.eventName) ? info : false
+    const rule = ruleMap.get(meta.eventName)
+    const level = rule?.level || meta.logLevel || info.level
+    return rule && winston.config.syslog.levels[level] <= winston.config.syslog.levels[maxLevel] ? info : false
   }
 
   /**
@@ -243,7 +254,7 @@ export default class Logger {
     const {
       [Symbol.for('level')]: level,
       [Symbol.for('message')]: message,
-      timestamp,
+      timestamp = '',
       meta,
     } = info
 
@@ -300,17 +311,17 @@ export default class Logger {
    */
   async close() {
     const eventData = {
-      eventName: `systemNotice`,
-      logLevel: levels.notice,
+      eventName: `systemInfo`,
+      logLevel: levels.info,
       timestamp: new Date(),
-      data: [levels.notice, 'Closing logger...']
+      data: [levels.info, 'Closing logger...']
     }
 
     return new Promise((resolve) => {
       this.#logger.on('finish', function (notice) {
         resolve()
       })
-      this.#logger.log({ level: levels.notice, message: '', meta: eventData })
+      this.#logger.log({ level: levels.info, message: '', meta: eventData })
       this.#logger.end()
     })
   }

@@ -11,6 +11,10 @@ Bisq-watcher consists of three core components:
 
 Whether you need real-time trade updates on Telegram or just want to keep an eye on the logs, bisq-watcher has you covered.
 
+Screenshot example of console output:
+
+![](./images/console_log.png)
+
 
 # Table of Contents
 
@@ -74,7 +78,7 @@ npm install
   
     > In particular, make sure: `logFile` specifies the correct location of the main Bisq log file `bisq.log`. See [Bisq data directory](https://bisq.wiki/Data_directory) default locations.
 
-For advanced configurations and all available options, refer to the JSDoc comments within `[app.config.sample.mjs](./app.config.sample.mjs)` file.
+For advanced configurations and all available options, refer to the JSDoc comments within [`app.config.sample.mjs`](./app.config.sample.mjs) file.
 
 
 ## Telegram Integration

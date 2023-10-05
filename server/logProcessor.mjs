@@ -3,7 +3,7 @@ import readline from 'node:readline'
 import { EventEmitter } from 'eventemitter3'
 import Debug from 'debug'
 import chokidar from 'chokidar'
-import { resolveEnvVariablesInPath, capitalize } from './util.mjs'
+import { resolveEnvVariablesInPath, capitalize, convertSystemMessageToEventData } from './util.mjs'
 import { levels } from './syslog.mjs'
 import rules from './rules/rules.mjs'
 import EventCache from './eventCache.mjs'
@@ -224,7 +224,7 @@ class LogProcessor extends EventEmitter {
    * @param {string} params.message - The message to emit
    */
   #emitSystemMessage({ level, message }) {
-    this.emit('eventData', { timestamp: new Date(), eventName: `system${capitalize(level)}`, logLevel: level, data: [level, message] })
+    this.emit('eventData', convertSystemMessageToEventData({ level, message }))
   }
 
   #logProgress({ fileSize, line }) {
@@ -381,7 +381,7 @@ class LogProcessor extends EventEmitter {
       this.#eventCache.clear()
       // we cannot have buffer overlap at the file start, but we set the flag to continue reading
       isBufferOverlapContinueReading = true
-      this.#emitSystemMessage({ level: levels.notice, message: `The Bisq logfile ${this.#filePath} has been rotated!` })
+      this.#emitSystemMessage({ level: levels.debug, message: `The Bisq logfile ${this.#filePath} has been rotated!` })
     }
 
     if (logProgress) this.#logProgress({ fileSize })
@@ -484,7 +484,7 @@ class LogProcessor extends EventEmitter {
     this.#buildFormatCache()
 
     dbg_fw('Reading the logfile at start...')
-    this.#emitSystemMessage({ level: levels.debug, message: `logProcessor: Reading the logfile at start...` })
+    this.#emitSystemMessage({ level: levels.info, message: `logProcessor: Reading the logfile at start...` })
     await this.#readNewLines({ atStartProcessEntireLogFile: this.#atStartProcessEntireLogFile, logProgress: true })
 
     try {
@@ -522,11 +522,11 @@ class LogProcessor extends EventEmitter {
    */
   async stopWatching() {
     if (this.#watcher) {
-      this.#emitSystemMessage({ level: levels.notice, message: `logProcessor: Stopping...` })
+      this.#emitSystemMessage({ level: levels.info, message: `logProcessor: Stopping...` })
       this.#watcher.close()
       this.#watcher = null
-      this.#emitSystemMessage({ level: levels.notice, message: `Stopped watching file ${this.#filePath}` })
-      this.#emitSystemMessage({ level: levels.notice, message: `logProcessor: Stopped!` })
+      this.#emitSystemMessage({ level: levels.warning, message: `Stopped watching file ${this.#filePath}` })
+      this.#emitSystemMessage({ level: levels.info, message: `logProcessor: Stopped!` })
     }
   }
 }

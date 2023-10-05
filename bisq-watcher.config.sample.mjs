@@ -17,7 +17,7 @@
  * @property {string} [apiToken] - API Token for telegram. Required if type is 'telegram'.
  * @property {string[]} [chatIds] - Chat IDs for telegram. Required if type is 'telegram'.
  * @property {boolean|string} [timestamp=flase] - Whether to include timestamp. Can also be a formatting string (see https://day.js.org/docs/en/display/format).
- * @property {'crit'|'alert'|'error'|'warning'|'info'|'notice'|'debug'} [level] - Maximum log level the logger transport will log.
+ * @property {'crit'|'alert'|'error'|'warning'|'notice'|'info'|'debug'} [maxLevel='info'] - Maximum log level the logger transport will log (crit = 0 and debug =7).
  * @property {boolean} [disabled=false] - Whether this logger is enabled.
  * @property {OverwriteRuleConfig[]} [overwriteRules] - Array of rule configurations for the logger.
  */
@@ -28,7 +28,7 @@
  * @typedef {Object} OverwriteRuleConfig
  * @property {string} eventName - The name of the rule to overwrite.
  * @property {string} [message] - A template string for formatting the message to emit.
- * @property {'crit'|'alert'|'error'|'warning'|'info'|'notice'|'debug'} [level='info'] - Overwrites the severity level of the original log event from Bisq log.
+ * @property {'crit'|'alert'|'error'|'warning'|'notice'|'info'|'debug'} [level] - Overwrites the severity level of the original log event from Bisq log.
  * @property {boolean} [sendToTelegram=true] - Flag indicating whether to send the message to Telegram.
  * @property {'active'|'inactive'} [activation] - Forces a rule do become active or not for respective watcher or transport
  *
@@ -55,13 +55,13 @@ export default {
       type: 'telegram',
       apiToken: "xxxxxxxxx:xxxxxxxxxxxxxxxxxxxxx-xxxxx",
       chatIds: ['135792468'],
-      level: 'notice',
+      maxLevel: 'notice',
       disabled: true,
     },
     {
       type: 'console',
       timestamp: 'MMM DD, HH:MM:ss.SSS',
-      level: 'debug',
+      maxLevel: 'debug',
       overwriteRules: [
         {
           eventName: 'BlockchainDownloadProgressTracker',
@@ -77,7 +77,7 @@ export default {
       type: 'file',
       filename: './logs/app.log',
       timestamp: true,
-      level: 'notice',
+      maxLevel: 'debug',
       disabled: true,
     },
   ],

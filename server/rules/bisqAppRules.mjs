@@ -10,6 +10,7 @@ export default [
     logger: 'b.c.app.Version',
     pattern: 'Version: Version{VERSION={0},',
     message: 'Bisq v{0} starting',
+    level: 'notice',
     sendToTelegram: true
   },
   {
@@ -17,6 +18,7 @@ export default [
     logger: 'b.c.a.BisqExecutable',
     pattern: 'Graceful shutdown completed. Exiting now.',
     message: 'Bisq graceful shutdown completed',
+    level: 'notice',
     sendToTelegram: true
   },
   {

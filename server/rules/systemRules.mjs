@@ -4,6 +4,13 @@
 
 export default [
   {
+    eventName: 'systemEmerg',
+    logger: 'system',
+    pattern: '',
+    message: '{0}',
+    sendToTelegram: true,
+  },
+  {
     eventName: 'systemCrit',
     logger: 'system',
     pattern: '',
@@ -19,6 +26,13 @@ export default [
   },
   {
     eventName: 'systemError',
+    logger: 'system',
+    pattern: '',
+    message: '{0}',
+    sendToTelegram: true,
+  },
+  {
+    eventName: 'systemWarning',
     logger: 'system',
     pattern: '',
     message: '{0}',

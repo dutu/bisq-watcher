@@ -25,11 +25,12 @@ export const levels = {
  * @type {{warning: string, error: string, notice: string, info: string}}
  */
 export const icons = {
-  crit: '💥',
+  emerg:'🛑',
   alert: '🚨',
+  crit: '💥',
   error: '❗️',
   warning: '⚠️',
-  notice: '🔷',
+  notice: '🔶',
   info: '💡',
   debug: '🔍',
 }
@@ -40,12 +41,12 @@ export const icons = {
  * @type {{emerg: string, debug: string, crit: string, alert: string, warning: string, error: string, notice: string, info: string}}
  */
 export const colors = {
-  emerg: 'red',
-  alert: 'yellow',
-  crit: 'red',
+  emerg: 'bold red yellowBG',
+  alert: 'red yellowBG',
+  crit: 'bold red',
   error: 'red',
-  warning: 'orange',
-  notice: 'brown',
+  warning: 'magenta',
+  notice: 'yellow',
   info: 'green',
-  debug: 'blue'
+  debug: 'dim blue'
 }
