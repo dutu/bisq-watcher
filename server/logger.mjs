@@ -6,26 +6,8 @@ import { TelegramTransport } from './telegramTransport.mjs'
 import { formatTimestamp } from './util.mjs'
 
 /**
- * Logger class for handling and storing logs.
+ * Logger class for handling and sending out logs.
  * It uses winston under the hood for different types of logging.
- *
- * The 'timestamp' option in the logger configuration can either be a boolean or a formatting function.
- * If it's `true`, the timestamp will be added as is.
- * If it's a function, it will be used to format the timestamp.
- *
- * @example
- * // Using boolean
- * timestamp: true
- *
- * // Using formatting function
- * timestamp: (ts) => `[Formatted: ${ts}]`
- *
- * Handles two types of events:
- * - 'eventData': The event data that comes from the LogProcessor.
- * - 'error': The error data.
- *
- *  @property {Object} #logger - The winston logger instance.
- *  @property {Array} #loggerConfig - The logger configuration from app.config.mjs.
  */
 export default class Logger {
   #logger
@@ -35,14 +17,6 @@ export default class Logger {
    * Creates a Logger instance with the specified configuration.
    *
    * @param {Object} loggerConfig - The logger configuration.
-   *
-   * Example:
-   * ```javascript
-   * const logger = new Logger([
-   *  { type: 'console', timestamp: true, enabled: true },
-   *  { type: 'file', filename: './logs/app.log', timestamp: true, enabled: true }
-   * ])
-   * ```
    */
   constructor(loggerConfig) {
     this.#loggerConfig = loggerConfig
@@ -174,7 +148,7 @@ export default class Logger {
   }
 
   /**
-   * Filters out messages without rule (isActive was false)
+   * Filters out messages without rule (isActive was false) or if log level is outside settings
    *
    * @param {'crit'|'alert'|'error'|'warning'|'info'|'notice'|'debug'} maxLevel - Maximum log level the logger transport will log.
    * @param {Map} ruleMap - The rule map
@@ -209,7 +183,7 @@ export default class Logger {
   }
 
   /**
-   * Populates message and updates level of the object containing the winston log entry,
+   * Populates message and updates level of the object containing the log information object,
    * based on the rule that matches the event data.
    *
    * @param {Map} ruleMap - Transport's rule map .

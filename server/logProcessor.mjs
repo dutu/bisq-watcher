@@ -144,10 +144,6 @@ class LogProcessor extends EventEmitter {
    * for later use.
    *
    * @param {Array<Object>} rules - The rules containing patterns to be cached.
-   * @example
-   * // Suppose rules = [{ pattern: 'myPattern{1:uptoHyphen}' }]
-   * buildFormatCache(rules)
-   * // This would compile and cache a RegExp based on 'myPattern{1:uptoHyphen}'
    */
   #buildFormatCache() {
     this.#ruleMap.forEach((rule) => {
@@ -186,10 +182,6 @@ class LogProcessor extends EventEmitter {
    * @param {string} line - The log line to be parsed.
    * @returns {Object} An object containing the extracted Date object, mapped level,
    *                   thread name, and logger.
-   *
-   * @example
-   * const result = extractTimestampAndLevel("Sep-26 15:53:03.480 [PersistenceManager-read-MyBlindVoteList] INFO  b.c.p.PersistenceManager: Reading MyBlindVoteList completed in 12 ms")
-   * console.log(result) // { timestamp: Date object, level: 'info', thread: 'PersistenceManager-read-MyBlindVoteList', logger: 'b.c.p.PersistenceManager' }
    */
   #extractLogEventMetadata(line) {
     const regex = /^(\w+-\d+ \d+:\d+:\d+\.\d+) \[(.*?)\] (\w+)  (.*?):/
@@ -337,14 +329,6 @@ class LogProcessor extends EventEmitter {
    * Asynchronously reads the statistics of the log file.
    *
    * @returns {Promise<number|null>} A Promise that resolves with the size of the file in bytes, or null if the file does not exist.
-   *
-   * @example
-   * const stats = await readFileStats()
-   * if (stats) {
-   *   console.log(stats.size)  // Output will show the size of the file in bytes
-   * } else {
-   *   console.log('File does not exist')
-   * }
    */
   async #readFileSize() {
     try {
@@ -460,10 +444,6 @@ class LogProcessor extends EventEmitter {
 
   /**
    * Starts watching the log file for changes and processes new lines accordingly.
-   *
-   * @example
-   * const logProcessor = new LogProcessor(config)
-   * await logProcessor.startWatching()
    */
   async startWatching() {
     if (this.#watcher) {
@@ -514,11 +494,6 @@ class LogProcessor extends EventEmitter {
 
   /**
    * Stops watching the log file.
-   *
-   * @example
-   * const logProcessor = new LogProcessor('path/to/log/file')
-   * logProcessor.startWatching()
-   * logProcessor.stopWatching()
    */
   async stopWatching() {
     if (this.#watcher) {
