@@ -3,7 +3,7 @@ import readline from 'node:readline'
 import { EventEmitter } from 'eventemitter3'
 import Debug from 'debug'
 import chokidar from 'chokidar'
-import { resolveEnvVariablesInPath, capitalize, convertSystemMessageToEventData } from './util.mjs'
+import { resolveEnvVariablesInPath, convertSystemMessageToEventData } from './util.mjs'
 import { levels } from './syslog.mjs'
 import rules from './rules/rules.mjs'
 import EventCache from './eventCache.mjs'
@@ -308,12 +308,12 @@ class LogProcessor extends EventEmitter {
    * Reads new lines from the log file and processes them.
    *
    * @param {Object} [options] - Optional parameters
-   * @param {boolean} [options.atStartProcessEntireLogFile=false] - Whether to only build the event cache without emitting events
+   * @param {boolean} [options.processEvent=true] - Whether to process the event or only build the event cache without emitting events
    *
    * @example
-   * await readNewLines({ atStartProcessEntireLogFile: true })
+   * await readNewLines({ processEvent: true })
    */
-  #processBufferedLogEvent({ atStartProcessEntireLogFile }) {
+  #processBufferedLogEvent({ processEvent }) {
     if (this.#eventCache.has(this.#buffer)) {
       dbg_fw(`Skipping cached event: ${this.#buffer}`)
       return
@@ -322,7 +322,7 @@ class LogProcessor extends EventEmitter {
     dbg_fw(`Processing buffered event: ${this.#buffer}`)
     const metadata = this.#extractLogEventMetadata(this.#buffer)
     if (metadata.timestamp) {
-      if (atStartProcessEntireLogFile) {
+      if (processEvent) {
         this.#ruleMap.forEach((rule) => {
           this.#processLogEventWithRule(this.#buffer, rule, metadata)
         })
@@ -359,7 +359,7 @@ class LogProcessor extends EventEmitter {
   /**
    * Reads new lines from the log file and processes them.
    */
-  async #readNewLines({ atStartProcessEntireLogFile = false, logProgress = false } = {}) {
+  async #readNewLines({ processEvent = true, logProgress = false } = {}) {
     this.#isReading = true
     this.#shouldReadAgain = false
 
@@ -397,7 +397,7 @@ class LogProcessor extends EventEmitter {
       rl.on('close', () => {
         // Process remaining buffer when readline interface is closed
         if (this.#buffer) {
-          this.#processBufferedLogEvent( { atStartProcessEntireLogFile })
+          this.#processBufferedLogEvent( { processEvent })
         }
       })
 
@@ -418,7 +418,7 @@ class LogProcessor extends EventEmitter {
               break
             }
 
-            this.#processBufferedLogEvent({ atStartProcessEntireLogFile })
+            this.#processBufferedLogEvent({ processEvent })
           }
 
           this.#buffer = line // Store the new line in the buffer
