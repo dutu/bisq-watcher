@@ -1,9 +1,9 @@
-const appName = process.env.APP_NAME || 'bisq-watcher'
+const configFileName = process.env.APP_NAME || 'bisq-watcher.config.mjs'
 
 module.exports = {
   apps: [{
-    name: appName,
+    name: configFileName,
     script: 'server/app.mjs',
-    args: `--config ${appName}.config.mjs`,
+    args: `--config ${configFileName}`,
   }],
 }

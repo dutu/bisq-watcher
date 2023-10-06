@@ -11,6 +11,8 @@ import rules from './rules/rules.mjs'
 import rulesSchema from './rules/rules.schema.mjs'
 import { pathToFileURL } from 'url'
 
+const DEFAULT_CONFIG_FILENAME = 'bisq-watcher.config.mjs'
+
 const ajvInstance = new ajv({ strictTypes: false })
 
 /**
@@ -59,7 +61,7 @@ export class AppConfigError extends Error {
  * // Run the script with: node script.js --name example
  * findConfigFilePath() // Returns undefined
  *
- * @returns {string|undefined} The path to the config file or undefined if not specified.
+ * @returns {string} The path to the config file or undefined if not specified. Defaults to DEFAULT_CONFIG_FILENAME
  */
 const findConfigFilePath = function findConfigFilePath() {
   // Check if CONFIG_NAME environment variable is set
@@ -77,7 +79,7 @@ const findConfigFilePath = function findConfigFilePath() {
     }
   }
 
-  return configFilePath
+  return configFilePath || DEFAULT_CONFIG_FILENAME
 }
 
 /**

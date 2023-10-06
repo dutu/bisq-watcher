@@ -139,7 +139,7 @@ Replace `YOUR_API_TOKEN` and `YOUR_CHAT_ID` with the actual values you obtained 
 * To run the bisq-watcher, use:
 
 ```shell
-npm start bisq-watcher
+npm start
 ```
 
 ## Notification Testing
@@ -192,14 +192,14 @@ If you need to monitor two Bisq instances on the same computer, follow these ste
 * Start the second watcher:
 
 ```shell
-CONFIG_NAME=bisq-watcher2 npm start
+npm start -- --config bisq-watcher2.config.mjs
 ```
 
  
 * To start the second watcher with PM2:
 
 ```shell
-pm2 start bisq-watcher2
+pm2 start bisq-watcher2.config.mjs
 ```
 
 # Contributions
