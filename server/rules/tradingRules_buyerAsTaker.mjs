@@ -62,7 +62,7 @@ export const tradingRules =  [
     isActive: false,
   },
   {
-    eventName: 'BuyerAsMakerTrade_BUYER_SENT_FIAT_PAYMENT_INITIATED_MSG',
+    eventName: 'BuyerAsTakerTrade_BUYER_SENT_FIAT_PAYMENT_INITIATED_MSG',
     logger: 'b.c.t.m.b.Trade',
     pattern: 'Set new state at BuyerAsTakerTrade (id={0}): BUYER_SENT_FIAT_PAYMENT_INITIATED_MSG',
     message: '({0}) You confirmed fiat payment has started. Wait until payment has arrived!',
