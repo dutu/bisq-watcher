@@ -78,7 +78,7 @@ npm install
   
     > In particular, make sure: `logFile` specifies the correct location of the main Bisq log file `bisq.log`. See [Bisq data directory](https://bisq.wiki/Data_directory) default locations.
 
-For advanced configurations and all available options, refer to the JSDoc comments within [`app.config.sample.mjs`](./app.config.sample.mjs) file.
+For advanced configurations and all available options, refer to the JSDoc comments within [`bisq-watcher.config.sample.mjs`](./bisq-watcher.config.sample.mjs) file.
 
 
 ## Telegram Integration
